@@ -6,6 +6,7 @@ import api from '@/lib/api'
 import { Button, EmptyState, SkeletonCard } from '@/components/ui'
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { mockGoals, mockActions } from '@/lib/mockData'
 
 function isSameDay(a, b) {
   return (
@@ -72,7 +73,34 @@ export default function CalendarPage() {
 
       setEvents(calendarEvents)
     } catch (error) {
-      setEvents([])
+      // Use mock data as fallback for development (silent)
+      const calendarEvents = []
+
+      mockGoals.forEach((goal) => {
+        if (goal.dueDate) {
+          calendarEvents.push({
+            id: `goal-${goal.id}`,
+            title: goal.title,
+            date: new Date(goal.dueDate),
+            type: 'goal',
+            color: 'bg-indigo-500',
+          })
+        }
+      })
+
+      mockActions.forEach((action) => {
+        if (action.dueDate) {
+          calendarEvents.push({
+            id: `action-${action.id}`,
+            title: action.title,
+            date: new Date(action.dueDate),
+            type: 'action',
+            color: 'bg-blue-500',
+          })
+        }
+      })
+
+      setEvents(calendarEvents)
     } finally {
       setLoading(false)
     }

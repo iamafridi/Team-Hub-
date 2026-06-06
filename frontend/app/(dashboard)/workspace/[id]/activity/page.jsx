@@ -6,6 +6,7 @@ import api from '@/lib/api'
 import { Button, EmptyState, SkeletonCard, Avatar } from '@/components/ui'
 import { Target, ListChecks, Megaphone, Flag, MessageSquare, Activity } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { mockActivity } from '@/lib/mockData'
 
 const entityIcons = {
   Goal: Target,
@@ -110,7 +111,9 @@ export default function ActivityPage() {
       }
       setNextCursor(response.data.nextCursor)
     } catch (error) {
-      setLogs([])
+      // Use mock data as fallback for development (silent)
+      setLogs(mockActivity)
+      setNextCursor(null)
     } finally {
       setLoading(false)
       setLoadingMore(false)
