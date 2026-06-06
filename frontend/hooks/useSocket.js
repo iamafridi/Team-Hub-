@@ -185,6 +185,29 @@ export function useSocket() {
       // Silent - only toast if it's the current user
     })
 
+    // Settings events
+    socket.on('workspace:updated', (data) => {
+      toast.info(`Workspace updated: ${data.workspace?.name}`)
+    })
+
+    socket.on('user:profile-updated', (data) => {
+      if (data.user?.id !== user.id) {
+        toast.info(`${data.user?.name}'s profile was updated`)
+      }
+    })
+
+    socket.on('member:invited', (data) => {
+      toast.success(`${data.member?.user?.name} was invited to the workspace`)
+      addNotification({
+        id: `notif-${Date.now()}`,
+        type: 'MEMBER_INVITED',
+        message: `${data.member?.user?.name} was invited`,
+        read: false,
+        createdAt: new Date().toISOString(),
+        link: `/workspace/${activeWorkspace.id}/members`,
+      })
+    })
+
     // Cleanup on unmount
     return () => {
       if (socket) {

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Shield, Power, Trash2, Check, ChevronRight } from 'lucide-react'
+import { Shield, Power, Trash2, Check, ChevronRight, UserCheck } from 'lucide-react'
 
 const ROLES = ['ADMIN', 'MODERATOR', 'MEMBER']
 
@@ -102,6 +102,18 @@ export default function MemberActions({
             </motion.div>
           )}
         </div>
+
+        {/* Assign to Work */}
+        <button
+          onClick={() => {
+            alert(`To assign work to ${member.user?.name}:\n\n1. Go to Goals or Actions\n2. Click the goal/action\n3. Click the user icon or assign dropdown\n4. Select ${member.user?.name}\n\nThey will be assigned and notified`)
+            onClose()
+          }}
+          className="w-full px-4 py-3 flex items-center gap-3 hover:bg-surface-2 transition-colors text-text-primary text-left text-sm font-medium"
+        >
+          <UserCheck className="w-4 h-4 flex-shrink-0" />
+          <span>Assign to Work</span>
+        </button>
 
         {/* Remove Member */}
         {!confirmRemove ? (

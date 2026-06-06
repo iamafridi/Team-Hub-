@@ -210,32 +210,32 @@ export default function MembersPage() {
         className="bg-surface border border-border rounded-xl overflow-hidden"
         variants={itemVariants}
       >
-        <div className="px-6 py-4 border-b border-border bg-surface-2">
+        <div className="px-4 sm:px-6 py-4 border-b border-border bg-surface-2">
           <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
             <Users className="w-5 h-5" />
             {members.length} Members
           </h2>
         </div>
 
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-border overflow-x-auto">
           <AnimatePresence>
             {members.map((member) => (
               <motion.div
                 key={member.id}
                 variants={itemVariants}
                 whileHover={{ backgroundColor: 'rgba(255,255,255,0.02)' }}
-                className="px-6 py-4 flex items-center justify-between transition-colors relative"
+                className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition-colors relative min-w-max sm:min-w-0"
               >
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent to-blue-600 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-bold text-lg">
+                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                  <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-gradient-to-br from-accent to-blue-600 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-bold text-sm sm:text-lg">
                       {member.user?.name?.charAt(0).toUpperCase() || '?'}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-text-primary">{member.user?.name}</h3>
-                    <div className="flex items-center gap-2 text-sm text-text-muted">
-                      <Mail className="w-4 h-4" />
+                    <h3 className="font-medium text-text-primary text-sm sm:text-base">{member.user?.name}</h3>
+                    <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-text-muted">
+                      <Mail className="w-3 sm:w-4 h-3 sm:h-4 flex-shrink-0" />
                       <span className="truncate">{member.user?.email}</span>
                     </div>
                   </div>

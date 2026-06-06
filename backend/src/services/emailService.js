@@ -14,6 +14,7 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
 
 async function sendInviteEmail(to, workspaceName, inviteLink, inviterName) {
   if (!transporter) {
+    console.warn('Email transporter not configured. Set EMAIL_USER and EMAIL_PASS environment variables.')
     return
   }
 
@@ -41,8 +42,9 @@ async function sendInviteEmail(to, workspaceName, inviteLink, inviterName) {
         </div>
       `,
     })
+    console.log(`Invite email sent to ${to} for workspace ${workspaceName}`)
   } catch (error) {
-    // Email sending failed silently
+    console.error(`Failed to send invite email to ${to}:`, error.message)
   }
 }
 
