@@ -140,7 +140,7 @@ export default function SettingsPage() {
     >
       {/* Header */}
       <motion.div variants={itemVariants}>
-        <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent mb-2">
+        <h1 className="text-2xl sm:text-4xl font-bold text-text-primary mb-2">
           Settings
         </h1>
         <p className="text-sm sm:text-lg text-text-secondary">
@@ -184,7 +184,7 @@ export default function SettingsPage() {
           ) : (
             <div className="space-y-4 p-4 bg-surface-2 rounded-lg">
               <div className="flex items-center gap-4 p-4 bg-surface rounded-lg">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent to-blue-600 flex items-center justify-center text-2xl flex-shrink-0">
+                <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center text-2xl flex-shrink-0">
                   {selectedAvatar || user?.avatarUrl || '👤'}
                 </div>
                 <div>

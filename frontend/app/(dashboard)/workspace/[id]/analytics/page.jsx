@@ -142,32 +142,30 @@ export default function AnalyticsPage() {
               onClick={() => setSelectedStat(stat.key)}
               className="cursor-pointer"
             >
-              <div className={`bg-gradient-to-br ${stat.color} p-0.5 rounded-xl`}>
-                <div className="bg-surface p-6 rounded-[10px] hover:bg-opacity-80 transition-all">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-sm font-medium text-text-muted uppercase tracking-wider">
-                      {stat.label}
-                    </span>
-                    <div className={`p-2 rounded-lg bg-gradient-to-br ${stat.color} opacity-10`}>
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
+              <div className="bg-white border border-border rounded-xl p-6 hover:shadow-md transition-all">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-text-muted uppercase tracking-wider">
+                    {stat.label}
+                  </span>
+                  <div className="p-2 rounded-lg bg-surface">
+                    <Icon className="w-5 h-5 text-accent" />
                   </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-text-primary">
-                      {stat.value}
-                    </span>
-                    <span className="text-sm text-text-muted">
-                      / {stat.total}
-                    </span>
-                  </div>
-                  <div className="mt-4 w-full bg-surface-2 rounded-full h-2">
-                    <div
-                      className={`bg-gradient-to-r ${stat.color} h-2 rounded-full`}
-                      style={{
-                        width: `${(stat.value / parseInt(stat.total)) * 100}%`,
-                      }}
-                    />
-                  </div>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-text-primary">
+                    {stat.value}
+                  </span>
+                  <span className="text-sm text-text-muted">
+                    / {stat.total}
+                  </span>
+                </div>
+                <div className="mt-4 w-full bg-surface-2 rounded-full h-2">
+                  <div
+                    className="bg-accent h-2 rounded-full"
+                    style={{
+                      width: `${(stat.value / parseInt(stat.total)) * 100}%`,
+                    }}
+                  />
                 </div>
               </div>
             </motion.div>
@@ -186,10 +184,10 @@ export default function AnalyticsPage() {
               className="bg-surface border border-border rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             >
               {/* Modal Header */}
-              <div className="sticky top-0 bg-surface border-b border-border p-6 flex items-center justify-between">
+              <div className="sticky top-0 bg-white border-b border-border p-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-lg bg-gradient-to-br ${currentStat.color} opacity-20`}>
-                    {currentStat.icon && <currentStat.icon className="w-6 h-6" />}
+                  <div className="p-3 rounded-lg bg-surface">
+                    {currentStat.icon && <currentStat.icon className="w-6 h-6 text-accent" />}
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-text-primary">{currentStat.label}</h2>
@@ -217,10 +215,10 @@ export default function AnalyticsPage() {
                     <button
                       key={period}
                       onClick={() => setTimePeriod(period)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         timePeriod === period
-                          ? `bg-gradient-to-r ${currentStat.color} text-white`
-                          : 'bg-surface-2 text-text-primary hover:bg-surface'
+                          ? 'bg-accent text-white'
+                          : 'bg-surface-2 text-text-primary hover:bg-surface border border-border'
                       }`}
                     >
                       {getTimePeriodLabel(period)}
@@ -322,9 +320,9 @@ export default function AnalyticsPage() {
                         </div>
 
                         {!editingItem && (
-                          <div className="mt-3 w-full bg-surface rounded-full h-2">
+                          <div className="mt-3 w-full bg-surface-2 rounded-full h-2">
                             <div
-                              className={`bg-gradient-to-r ${currentStat.color} h-2 rounded-full transition-all`}
+                              className="bg-accent h-2 rounded-full transition-all"
                               style={{ width: `${item.progress || 0}%` }}
                             />
                           </div>

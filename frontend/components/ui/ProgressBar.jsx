@@ -12,9 +12,7 @@ export function ProgressBar({ value = 0, size = 'md', className = '' }) {
   const percentage = Math.min(100, Math.max(0, value))
 
   const getColor = () => {
-    if (percentage >= 70) return 'bg-green-500'
-    if (percentage >= 40) return 'bg-yellow-500'
-    return 'bg-red-500'
+    return 'bg-accent'
   }
 
   return (

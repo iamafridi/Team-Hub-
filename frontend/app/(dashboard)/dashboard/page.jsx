@@ -21,10 +21,10 @@ export default function Dashboard() {
   const { notifications } = useNotificationStore()
   const [openModal, setOpenModal] = useState(null)
   const [stats, setStats] = useState([
-    { label: 'Total Workspaces', value: '—', icon: Zap, color: 'from-blue-500 to-blue-600' },
-    { label: 'Active Goals', value: '—', icon: Target, color: 'from-purple-500 to-purple-600' },
-    { label: 'Team Members', value: '—', icon: Users, color: 'from-green-500 to-green-600' },
-    { label: 'Notifications', value: '—', icon: Bell, color: 'from-orange-500 to-orange-600' },
+    { label: 'Total Workspaces', value: '—', icon: Zap },
+    { label: 'Active Goals', value: '—', icon: Target },
+    { label: 'Team Members', value: '—', icon: Users },
+    { label: 'Notifications', value: '—', icon: Bell },
   ])
 
   useEffect(() => {
@@ -41,10 +41,10 @@ export default function Dashboard() {
         const memberCount = membersRes.data.data.length
 
         setStats([
-          { label: 'Total Workspaces', value: workspaces.length.toString(), icon: Zap, color: 'from-blue-500 to-blue-600' },
-          { label: 'Active Goals', value: activeGoals.toString(), icon: Target, color: 'from-purple-500 to-purple-600' },
-          { label: 'Team Members', value: memberCount.toString(), icon: Users, color: 'from-green-500 to-green-600' },
-          { label: 'Notifications', value: notifications.length.toString(), icon: Bell, color: 'from-orange-500 to-orange-600' },
+          { label: 'Total Workspaces', value: workspaces.length.toString(), icon: Zap },
+          { label: 'Active Goals', value: activeGoals.toString(), icon: Target },
+          { label: 'Team Members', value: memberCount.toString(), icon: Users },
+          { label: 'Notifications', value: notifications.length.toString(), icon: Bell },
         ])
       } catch (error) {
         // Use mock data as fallback for development (silent)
@@ -52,10 +52,10 @@ export default function Dashboard() {
         const memberCount = mockMembers.length
 
         setStats([
-          { label: 'Total Workspaces', value: workspaces.length.toString(), icon: Zap, color: 'from-blue-500 to-blue-600' },
-          { label: 'Active Goals', value: activeGoals.toString(), icon: Target, color: 'from-purple-500 to-purple-600' },
-          { label: 'Team Members', value: memberCount.toString(), icon: Users, color: 'from-green-500 to-green-600' },
-          { label: 'Notifications', value: notifications.length.toString(), icon: Bell, color: 'from-orange-500 to-orange-600' },
+          { label: 'Total Workspaces', value: workspaces.length.toString(), icon: Zap },
+          { label: 'Active Goals', value: activeGoals.toString(), icon: Target },
+          { label: 'Team Members', value: memberCount.toString(), icon: Users },
+          { label: 'Notifications', value: notifications.length.toString(), icon: Bell },
         ])
       }
     }
@@ -102,7 +102,7 @@ export default function Dashboard() {
     >
       {/* Header */}
       <motion.div variants={itemVariants} className="pt-2">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent mb-2">
+        <h1 className="text-4xl font-bold text-text-primary mb-2">
           Welcome back, {user?.name || 'User'}! 👋
         </h1>
         <p className="text-text-secondary text-lg">
@@ -125,22 +125,20 @@ export default function Dashboard() {
               className="group cursor-pointer"
               onClick={() => setOpenModal(cardModalMap[stat.label])}
             >
-              <div className={`bg-gradient-to-br ${stat.color} p-0.5 rounded-xl`}>
-                <div className="bg-surface p-6 rounded-[10px] hover:bg-surface-2 transition-colors duration-300">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="text-sm font-medium text-text-muted uppercase tracking-wider">
-                      {stat.label}
-                    </div>
-                    <div className={`p-2 rounded-lg bg-gradient-to-br ${stat.color} opacity-10 group-hover:opacity-20 transition-opacity`}>
-                      <Icon className={`w-5 h-5 text-${stat.color.split('-')[1]}-500`} />
-                    </div>
+              <div className="bg-white border border-border rounded-xl p-6 hover:shadow-md transition-all">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-sm font-medium text-text-muted uppercase tracking-wider">
+                    {stat.label}
                   </div>
-                  <div className="text-4xl font-bold text-text-primary">
-                    {stat.value}
+                  <div className="p-2 rounded-lg bg-surface">
+                    <Icon className="w-5 h-5 text-accent" />
                   </div>
-                  <div className="mt-3 pt-3 border-t border-border">
-                    <p className="text-xs text-text-muted">+0 this week</p>
-                  </div>
+                </div>
+                <div className="text-4xl font-bold text-text-primary">
+                  {stat.value}
+                </div>
+                <div className="mt-3 pt-3 border-t border-border">
+                  <p className="text-xs text-text-muted">+0 this week</p>
                 </div>
               </div>
             </motion.div>

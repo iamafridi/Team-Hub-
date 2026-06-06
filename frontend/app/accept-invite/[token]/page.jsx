@@ -44,7 +44,7 @@ export default function AcceptInvitePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-surface to-surface-2 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-bg flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}

@@ -119,7 +119,7 @@ export function DashboardClient({ children }) {
             className="w-60 bg-surface border-r border-border flex flex-col flex-shrink-0 lg:relative lg:translate-x-0 fixed inset-y-0 left-0 z-40 lg:z-0"
           >
             <div className="h-16 px-6 border-b border-border flex items-center">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold text-accent">
                 Team Hub
               </h1>
             </div>
@@ -143,7 +143,7 @@ export function DashboardClient({ children }) {
                       }}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 ${
                         active
-                          ? 'bg-gradient-to-r from-accent to-blue-600 text-white shadow-lg'
+                          ? 'bg-accent text-white'
                           : 'text-text-muted hover:text-text-primary hover:bg-surface-2'
                       }`}
                     >
@@ -164,7 +164,7 @@ export function DashboardClient({ children }) {
 
             <div className="p-4 border-t border-border">
               <div className="flex items-center gap-3 px-3 py-3 rounded-lg bg-surface-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-blue-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
                   <span className="text-white text-sm font-bold">
                     {user?.name?.charAt(0).toUpperCase() || 'U'}
                   </span>

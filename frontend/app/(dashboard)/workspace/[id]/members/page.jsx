@@ -227,7 +227,7 @@ export default function MembersPage() {
                 className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition-colors relative min-w-max sm:min-w-0"
               >
                 <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                  <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-gradient-to-br from-accent to-blue-600 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
                     <span className="text-white font-bold text-sm sm:text-lg">
                       {member.user?.name?.charAt(0).toUpperCase() || '?'}
                     </span>
