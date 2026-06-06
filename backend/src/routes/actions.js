@@ -29,7 +29,7 @@ const updateActionSchema = z.object({
 router.get('/:workspaceId/actions', async (req, res) => {
   try {
     const { status, assigneeId, goalId } = req.query
-    const where = { workspaceId: req.params.workspaceId }
+    const where = { workspaceId: req.params.workspaceId, deletedAt: null }
     if (status) where.status = status
     if (assigneeId) where.assigneeId = assigneeId
     if (goalId) where.goalId = goalId
@@ -176,10 +176,32 @@ router.patch('/:workspaceId/actions/:actionId', async (req, res) => {
 
 router.delete('/:workspaceId/actions/:actionId', async (req, res) => {
   try {
-    await prisma.actionItem.delete({ where: { id: req.params.actionId } })
+    await prisma.actionItem.update({
+      where: { id: req.params.actionId },
+      data: { deletedAt: new Date() }
+    })
     logAction(req.userId, req.params.workspaceId, 'DELETE', 'ActionItem', req.params.actionId)
     emitToWorkspace(req.params.workspaceId, 'action:deleted', { actionId: req.params.actionId })
     res.json({ message: 'Action deleted' })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Server error' })
+  }
+})
+
+router.patch('/:workspaceId/actions/:actionId/restore', async (req, res) => {
+  try {
+    const action = await prisma.actionItem.update({
+      where: { id: req.params.actionId },
+      data: { deletedAt: null },
+      include: {
+        assignee: { select: { id: true, name: true, avatarUrl: true } },
+        goal: { select: { id: true, title: true } },
+      },
+    })
+    logAction(req.userId, req.params.workspaceId, 'RESTORE', 'ActionItem', req.params.actionId)
+    emitToWorkspace(req.params.workspaceId, 'action:restored', { action })
+    res.json({ data: action, message: 'Action restored' })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Server error' })

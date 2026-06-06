@@ -262,3 +262,44 @@ export const mockAnalytics = {
   teamMembers: 4,
   overallProgress: 56,
 }
+
+export const mockTrash = {
+  goals: [
+    {
+      id: 'trash-goal-1',
+      title: 'Old Q4 Revenue Target',
+      description: 'Previous quarter revenue goal - no longer needed',
+      status: 'ON_TRACK',
+      progress: 45,
+      dueDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
+      deletedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      owner: { id: 'user-1', name: 'Sarah Johnson', avatar: null },
+    },
+  ],
+  actions: [
+    {
+      id: 'trash-action-1',
+      title: 'Deprecated API integration',
+      status: 'todo',
+      assignee: { id: 'user-2', name: 'Mike Chen' },
+      dueDate: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+      goalId: null,
+      priority: 'medium',
+      description: 'No longer needed - replaced with new API',
+      deletedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ],
+  announcements: [
+    {
+      id: 'trash-announce-1',
+      title: 'Old System Maintenance Notice',
+      content: 'This was posted during the old system migration.',
+      author: { id: 'user-3', name: 'Emma Davis' },
+      createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+      isPinned: false,
+      reactions: [],
+      deletedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ],
+}

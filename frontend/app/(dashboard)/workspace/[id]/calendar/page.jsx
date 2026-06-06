@@ -180,8 +180,8 @@ export default function CalendarPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">Calendar</h1>
-          <p className="text-text-secondary">Track deadlines and milestones</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Calendar</h1>
+          <p className="text-sm sm:text-base text-text-secondary">Track deadlines and milestones</p>
         </div>
       </div>
 
@@ -213,7 +213,7 @@ export default function CalendarPage() {
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
               <div
                 key={day}
-                className="bg-surface-2 p-3 text-center text-xs font-semibold text-text-muted"
+                className="bg-surface-2 p-2 sm:p-3 text-center text-[10px] sm:text-xs font-semibold text-text-muted"
               >
                 {day}
               </div>
@@ -228,7 +228,7 @@ export default function CalendarPage() {
                   key={index}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className={`min-h-24 p-2 border border-border flex flex-col ${
+                  className={`min-h-16 sm:min-h-24 p-1 sm:p-2 border border-border flex flex-col ${
                     day.isCurrentMonth ? 'bg-surface' : 'bg-surface-2'
                   }`}
                 >

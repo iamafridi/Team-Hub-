@@ -195,10 +195,10 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">Announcements</h1>
-          <p className="text-text-secondary">Share updates with your team</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Announcements</h1>
+          <p className="text-sm sm:text-base text-text-secondary">Share updates with your team</p>
         </div>
         <Button
           variant="primary"
@@ -206,7 +206,7 @@ export default function AnnouncementsPage() {
             setEditingAnnouncement(null)
             openModal('create-announcement')
           }}
-          className="gap-2"
+          className="gap-2 text-sm sm:text-base"
         >
           <Plus className="w-4 h-4" />
           New Announcement

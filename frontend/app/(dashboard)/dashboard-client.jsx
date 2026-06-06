@@ -8,7 +8,7 @@ import { useUIStore } from '@/store/uiStore'
 import { useNotificationStore } from '@/store/notificationStore'
 import { useSocket } from '@/hooks/useSocket'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Home, Target, ListChecks, Megaphone, BarChart3, Activity, CalendarDays, Users, Settings, Sun, Moon } from 'lucide-react'
+import { Menu, X, Home, Target, ListChecks, Megaphone, BarChart3, Activity, CalendarDays, Users, Settings, Sun, Moon, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { GlobalSearch } from '@/components/search/GlobalSearch'
@@ -32,12 +32,15 @@ export function DashboardClient({ children }) {
     { icon: Activity, label: 'Activity', href: 'activity' },
     { icon: CalendarDays, label: 'Calendar', href: 'calendar' },
     { icon: Users, label: 'Members', href: 'members' },
+    { icon: Trash2, label: 'Trash', href: 'trash' },
     { icon: Settings, label: 'Settings', href: 'settings' },
   ]
 
   const isNavActive = (href) => {
     return pathname.includes(`/${href}`)
   }
+
+  const isMobile = mounted && typeof window !== 'undefined' && window.innerWidth < 1024
 
   useSocket()
 
@@ -91,6 +94,20 @@ export function DashboardClient({ children }) {
 
   return (
     <div className="flex h-screen bg-bg">
+      {/* Mobile backdrop */}
+      <AnimatePresence>
+        {sidebarOpen && isMobile && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+            onClick={() => toggleSidebar()}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -99,7 +116,7 @@ export function DashboardClient({ children }) {
             animate={{ x: 0 }}
             exit={{ x: -260 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="w-60 bg-surface border-r border-border flex flex-col flex-shrink-0"
+            className="w-60 bg-surface border-r border-border flex flex-col flex-shrink-0 lg:relative lg:translate-x-0 fixed inset-y-0 left-0 z-40 lg:z-0"
           >
             <div className="h-16 px-6 border-b border-border flex items-center">
               <h1 className="text-xl font-bold bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent">
@@ -119,6 +136,11 @@ export function DashboardClient({ children }) {
                   <motion.div key={link.href} whileHover={{ x: 4 }} transition={{ duration: 0.1 }}>
                     <Link
                       href={href}
+                      onClick={() => {
+                        if (isMobile && sidebarOpen) {
+                          toggleSidebar()
+                        }
+                      }}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 ${
                         active
                           ? 'bg-gradient-to-r from-accent to-blue-600 text-white shadow-lg'
@@ -164,7 +186,7 @@ export function DashboardClient({ children }) {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="h-16 bg-surface border-b border-border flex items-center px-6 gap-4 flex-shrink-0">
+        <header className="min-h-16 bg-surface border-b border-border flex items-center justify-between flex-wrap px-4 sm:px-6 gap-2 sm:gap-4 flex-shrink-0">
           <Button
             onClick={toggleSidebar}
             variant="ghost"
@@ -174,10 +196,10 @@ export function DashboardClient({ children }) {
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
 
-          <div className="flex-1" />
+          <div className="hidden sm:flex flex-1" />
 
-          <div className="flex items-center gap-3">
-            <div className="w-64">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden sm:block w-full sm:w-64 max-w-xs">
               <GlobalSearch workspaceId={activeWorkspace?.id} />
             </div>
 

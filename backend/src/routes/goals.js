@@ -25,7 +25,7 @@ const updateGoalSchema = z.object({
 router.get('/:workspaceId/goals', async (req, res) => {
   try {
     const goals = await prisma.goal.findMany({
-      where: { workspaceId: req.params.workspaceId },
+      where: { workspaceId: req.params.workspaceId, deletedAt: null },
       include: {
         owner: { select: { id: true, name: true, avatarUrl: true } },
         _count: { select: { milestones: true, actionItems: true } },
@@ -160,10 +160,28 @@ router.patch('/:workspaceId/goals/:goalId', async (req, res) => {
 
 router.delete('/:workspaceId/goals/:goalId', requireRole('ADMIN'), async (req, res) => {
   try {
-    await prisma.goal.delete({ where: { id: req.params.goalId } })
+    await prisma.goal.update({
+      where: { id: req.params.goalId },
+      data: { deletedAt: new Date() }
+    })
     logAction(req.userId, req.params.workspaceId, 'DELETE', 'Goal', req.params.goalId)
     emitToWorkspace(req.params.workspaceId, 'goal:deleted', { goalId: req.params.goalId })
     res.json({ message: 'Goal deleted' })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Server error' })
+  }
+})
+
+router.patch('/:workspaceId/goals/:goalId/restore', requireRole('ADMIN'), async (req, res) => {
+  try {
+    const goal = await prisma.goal.update({
+      where: { id: req.params.goalId },
+      data: { deletedAt: null }
+    })
+    logAction(req.userId, req.params.workspaceId, 'RESTORE', 'Goal', req.params.goalId)
+    emitToWorkspace(req.params.workspaceId, 'goal:restored', { goal })
+    res.json({ data: goal, message: 'Goal restored' })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Server error' })

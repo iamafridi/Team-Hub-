@@ -21,7 +21,7 @@ const updateAnnounceSchema = z.object({
 router.get('/:workspaceId/announcements', async (req, res) => {
   try {
     const announcements = await prisma.announcement.findMany({
-      where: { workspaceId: req.params.workspaceId },
+      where: { workspaceId: req.params.workspaceId, deletedAt: null },
       include: {
         author: { select: { id: true, name: true, avatarUrl: true } },
         comments: {
@@ -94,10 +94,32 @@ router.patch('/:workspaceId/announcements/:annId', requireRole('ADMIN'), async (
 
 router.delete('/:workspaceId/announcements/:annId', requireRole('ADMIN'), async (req, res) => {
   try {
-    await prisma.announcement.delete({ where: { id: req.params.annId } })
+    await prisma.announcement.update({
+      where: { id: req.params.annId },
+      data: { deletedAt: new Date() }
+    })
     logAction(req.userId, req.params.workspaceId, 'DELETE', 'Announcement', req.params.annId)
     emitToWorkspace(req.params.workspaceId, 'announcement:deleted', { announcementId: req.params.annId })
     res.json({ message: 'Announcement deleted' })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Server error' })
+  }
+})
+
+router.patch('/:workspaceId/announcements/:annId/restore', requireRole('ADMIN'), async (req, res) => {
+  try {
+    const announcement = await prisma.announcement.update({
+      where: { id: req.params.annId },
+      data: { deletedAt: null },
+      include: {
+        author: { select: { id: true, name: true, avatarUrl: true } },
+        reactions: true,
+      },
+    })
+    logAction(req.userId, req.params.workspaceId, 'RESTORE', 'Announcement', req.params.annId)
+    emitToWorkspace(req.params.workspaceId, 'announcement:restored', { announcement })
+    res.json({ data: announcement, message: 'Announcement restored' })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Server error' })
@@ -201,7 +223,7 @@ router.post('/:workspaceId/announcements/:annId/comments', async (req, res) => {
           },
         })
         emitToUser(user.id, 'notification:new', { notification })
-        sendMentionEmail(user.email, comment.author.name, '', content.substring(0, 200), '#')
+        await sendMentionEmail(user.email, comment.author.name, '', content.substring(0, 200), '#')
       }
     }
 

@@ -144,15 +144,15 @@ export default function GoalsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">Goals</h1>
-          <p className="text-text-secondary">Track team objectives and milestones</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Goals</h1>
+          <p className="text-sm sm:text-base text-text-secondary">Track team objectives and milestones</p>
         </div>
         <Button
           variant="primary"
           onClick={() => openModal('create-goal')}
-          className="gap-2"
+          className="gap-2 text-sm sm:text-base"
         >
           <Plus className="w-4 h-4" />
           New Goal

@@ -299,9 +299,9 @@ router.post('/:id/invite', requireRole('ADMIN'), async (req, res) => {
       const inviteLink = `${process.env.CLIENT_URL}/accept-invite/${invite.token}`
       try {
         const { sendInviteEmail } = require('../services/emailService')
-        sendInviteEmail(email, workspace.name, inviteLink, inviter.name)
+        await sendInviteEmail(email, workspace.name, inviteLink, inviter.name)
       } catch (emailError) {
-        // Email send failed but invitation was created
+        console.error('Failed to send invite email:', emailError)
       }
     }
 

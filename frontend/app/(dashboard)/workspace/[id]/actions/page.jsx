@@ -131,10 +131,10 @@ export default function ActionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">Actions</h1>
-          <p className="text-text-secondary">Organize and track tasks</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Actions</h1>
+          <p className="text-sm sm:text-base text-text-secondary">Organize and track tasks</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 bg-surface rounded-lg p-1">

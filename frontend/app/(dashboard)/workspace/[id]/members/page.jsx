@@ -188,17 +188,17 @@ export default function MembersPage() {
       variants={containerVariants}
     >
       {/* Header */}
-      <motion.div variants={itemVariants} className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent mb-2">
+      <motion.div variants={itemVariants} className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent mb-2">
             Team Members
           </h1>
-          <p className="text-text-secondary text-lg">
+          <p className="text-sm sm:text-lg text-text-secondary">
             Manage workspace members, roles, and permissions
           </p>
         </div>
         {isAdmin && (
-          <Button onClick={() => setShowInviteModal(true)} className="gap-2">
+          <Button onClick={() => setShowInviteModal(true)} className="gap-2 flex-shrink-0">
             <Plus className="w-4 h-4" />
             Invite Member
           </Button>
@@ -241,7 +241,7 @@ export default function MembersPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 justify-end">
                   {/* Active Status */}
                   <div className="flex items-center gap-2">
                     {member.isActive ? (
@@ -249,7 +249,7 @@ export default function MembersPage() {
                     ) : (
                       <Circle className="w-5 h-5 text-gray-400" />
                     )}
-                    <span className="text-sm font-medium text-text-primary">
+                    <span className="text-xs sm:text-sm font-medium text-text-primary">
                       {member.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
@@ -257,14 +257,14 @@ export default function MembersPage() {
                   {/* Role Badge */}
                   <div className="flex items-center gap-2 min-w-fit">
                     <Shield className="w-4 h-4 text-accent" />
-                    <span className="text-sm font-medium text-text-primary uppercase tracking-wider">
+                    <span className="text-xs sm:text-sm font-medium text-text-primary uppercase tracking-wider">
                       {member.role}
                     </span>
                   </div>
 
                   {/* Actions (Admin Only) */}
                   {isAdmin && member.id !== currentMember?.id && (
-                    <div className="relative">
+                    <div className="relative flex-shrink-0">
                       <button
                         onClick={() => setOpenMenuId(openMenuId === member.id ? null : member.id)}
                         className="p-2 hover:bg-surface-2 rounded-lg transition-colors"

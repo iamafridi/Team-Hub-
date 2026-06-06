@@ -26,6 +26,7 @@ const uploadRoutes = require('./routes/upload')
 const commentRoutes = require('./routes/comments')
 const searchRoutes = require('./routes/search')
 const activityRoutes = require('./routes/activity')
+const trashRoutes = require('./routes/trash')
 
 const app = express()
 const server = http.createServer(app)
@@ -103,6 +104,7 @@ app.use('/upload', authMiddleware, uploadRoutes)
 app.use('/workspaces', authMiddleware, commentRoutes)
 app.use('/workspaces', authMiddleware, searchRoutes)
 app.use('/workspaces', authMiddleware, activityRoutes)
+app.use('/workspaces', authMiddleware, trashRoutes)
 
 io.use(async (socket, next) => {
   try {
