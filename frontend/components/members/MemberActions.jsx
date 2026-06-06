@@ -35,7 +35,7 @@ export default function MemberActions({
       initial={{ opacity: 0, scale: 0.95, y: -10 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: -10 }}
-      className={`absolute top-full mt-2 bg-surface border border-border rounded-lg shadow-2xl z-50 min-w-56 overflow-visible ${
+      className={`absolute top-full mt-2 bg-surface border border-border rounded-lg shadow-2xl z-50 min-w-56 overflow-y-auto max-h-96 ${
         position === 'left' ? 'right-0' : 'left-0'
       }`}
       onClick={(e) => e.stopPropagation()}
