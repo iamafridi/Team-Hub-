@@ -1,0 +1,177 @@
+const express = require('express')
+const { z } = require('zod')
+const prisma = require('../prisma/client')
+const { requireRole } = require('../middleware/rbac')
+const { logAction } = require('../utils/auditLog')
+const { emitToWorkspace } = require('../socket/emitter')
+
+const router = express.Router()
+
+const createGoalSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  dueDate: z.string().datetime().optional(),
+  ownerId: z.string().optional(),
+})
+
+const updateGoalSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  status: z.enum(['ON_TRACK', 'AT_RISK', 'BEHIND', 'COMPLETED']).optional(),
+  dueDate: z.string().datetime().optional(),
+})
+
+router.get('/:workspaceId/goals', async (req, res) => {
+  try {
+    const goals = await prisma.goal.findMany({
+      where: { workspaceId: req.params.workspaceId },
+      include: {
+        owner: { select: { id: true, name: true, avatarUrl: true } },
+        _count: { select: { milestones: true, actionItems: true } },
+        milestones: { select: { progress: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    const enriched = goals.map(g => {
+      const avgProgress = g.milestones.length ? Math.round(g.milestones.reduce((sum, m) => sum + m.progress, 0) / g.milestones.length) : 0
+      return {
+        ...g,
+        milestones: undefined,
+        avgMilestoneProgress: avgProgress,
+      }
+    })
+    res.json({ data: enriched, message: 'Goals fetched' })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Server error' })
+  }
+})
+
+router.post('/:workspaceId/goals', async (req, res) => {
+  try {
+    const { title, description, dueDate, ownerId } = createGoalSchema.parse(req.body)
+    const goal = await prisma.goal.create({
+      data: {
+        title,
+        description,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        ownerId: ownerId || req.userId,
+        workspaceId: req.params.workspaceId,
+      },
+      include: {
+        owner: { select: { id: true, name: true, avatarUrl: true } },
+        milestones: { select: { progress: true } },
+        _count: { select: { actionItems: true } },
+      },
+    })
+    const avgProgress = goal.milestones.length
+      ? Math.round(goal.milestones.reduce((sum, m) => sum + m.progress, 0) / goal.milestones.length)
+      : 0
+    logAction(req.userId, req.params.workspaceId, 'CREATE', 'Goal', goal.id)
+    emitToWorkspace(req.params.workspaceId, 'goal:created', { goal })
+    res.status(201).json({ data: { ...goal, avgMilestoneProgress: avgProgress }, message: 'Goal created' })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid input' })
+    }
+    console.error(error)
+    res.status(500).json({ error: 'Server error' })
+  }
+})
+
+router.get('/:workspaceId/goals/:goalId', async (req, res) => {
+  try {
+    const goal = await prisma.goal.findUnique({
+      where: { id: req.params.goalId },
+      include: {
+        owner: { select: { id: true, name: true, avatarUrl: true } },
+        milestones: true,
+        updates: {
+          include: { author: { select: { id: true, name: true, avatarUrl: true } } },
+          orderBy: { createdAt: 'desc' },
+        },
+        actionItems: {
+          select: { id: true, title: true, status: true, priority: true },
+        },
+      },
+    })
+    if (!goal) {
+      return res.status(404).json({ error: 'Goal not found' })
+    }
+    res.json({ data: goal, message: 'Goal fetched' })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Server error' })
+  }
+})
+
+router.patch('/:workspaceId/goals/:goalId', async (req, res) => {
+  try {
+    const { title, description, status, dueDate } = updateGoalSchema.parse(req.body)
+    const goal = await prisma.goal.findUnique({ where: { id: req.params.goalId } })
+    if (goal.ownerId !== req.userId && req.memberRole !== 'ADMIN') {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
+    const updated = await prisma.goal.update({
+      where: { id: req.params.goalId },
+      data: {
+        ...(title && { title }),
+        ...(description !== undefined && { description }),
+        ...(status && { status }),
+        ...(dueDate && { dueDate: new Date(dueDate) }),
+      },
+      include: {
+        owner: { select: { id: true, name: true, avatarUrl: true } },
+        milestones: true,
+      },
+    })
+    logAction(req.userId, req.params.workspaceId, 'UPDATE', 'Goal', req.params.goalId)
+    emitToWorkspace(req.params.workspaceId, 'goal:updated', { goal: updated })
+    res.json({ data: updated, message: 'Goal updated' })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid input' })
+    }
+    console.error(error)
+    res.status(500).json({ error: 'Server error' })
+  }
+})
+
+router.delete('/:workspaceId/goals/:goalId', requireRole('ADMIN'), async (req, res) => {
+  try {
+    await prisma.goal.delete({ where: { id: req.params.goalId } })
+    logAction(req.userId, req.params.workspaceId, 'DELETE', 'Goal', req.params.goalId)
+    emitToWorkspace(req.params.workspaceId, 'goal:deleted', { goalId: req.params.goalId })
+    res.json({ message: 'Goal deleted' })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Server error' })
+  }
+})
+
+router.post('/:workspaceId/goals/:goalId/updates', async (req, res) => {
+  try {
+    const { content } = z.object({ content: z.string().min(1) }).parse(req.body)
+    const update = await prisma.goalUpdate.create({
+      data: {
+        content,
+        goalId: req.params.goalId,
+        authorId: req.userId,
+      },
+      include: {
+        author: { select: { id: true, name: true, avatarUrl: true } },
+      },
+    })
+    logAction(req.userId, req.params.workspaceId, 'CREATE', 'GoalUpdate', update.id)
+    emitToWorkspace(req.params.workspaceId, 'goal:updated', { goalId: req.params.goalId, update })
+    res.status(201).json({ data: update, message: 'Update posted' })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid input' })
+    }
+    console.error(error)
+    res.status(500).json({ error: 'Server error' })
+  }
+})
+
+module.exports = router

@@ -1,0 +1,14 @@
+[build]
+builder = "nixpacks"
+
+[[services]]
+name = "api"
+root = "apps/api"
+[services.deploy]
+startCommand = "npm start"
+
+[[services]]
+name = "web"
+root = "apps/web"
+[services.deploy]
+startCommand = "npm start"

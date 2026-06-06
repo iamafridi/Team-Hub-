@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 0 0% 100%;
+  --surface: 0 0% 97%;
+  --surface-2: 0 0% 93%;
+  --border: 240 5% 84%;
+  --text-primary: 240 10% 10%;
+  --text-secondary: 240 5% 45%;
+  --text-muted: 240 5% 65%;
+  --accent: #6366F1;
+}
+
+.dark {
+  --bg: 240 10% 4%;
+  --surface: 240 8% 7%;
+  --surface-2: 240 6% 11%;
+  --border: 240 5% 17%;
+  --text-primary: 240 5% 94%;
+  --text-secondary: 240 5% 55%;
+  --text-muted: 240 5% 35%;
+}
+
+* {
+  @apply transition-colors duration-150;
+}
+
+body {
+  @apply bg-bg text-text-primary font-sans antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-surface;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-surface-2 rounded-full;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--surface)) 25%,
+    hsl(var(--surface-2)) 50%,
+    hsl(var(--surface)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}

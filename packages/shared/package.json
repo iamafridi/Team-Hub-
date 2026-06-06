@@ -1,0 +1,9 @@
+{
+  "name": "@team-hub/shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./permissions.js",
+  "exports": {
+    ".": "./permissions.js"
+  }
+}
