@@ -51,7 +51,7 @@ export default function MemberActions({
         {/* Status Toggle */}
         <button
           onClick={() => {
-            onChangeStatus(member.userId, !member.isActive)
+            onChangeStatus(member.id, !member.isActive)
             onClose()
           }}
           className="w-full px-4 py-3 flex items-center gap-3 hover:bg-surface-2 transition-colors text-text-primary text-left text-sm font-medium"
@@ -85,7 +85,7 @@ export default function MemberActions({
                 <button
                   key={role}
                   onClick={() => {
-                    onChangeRole(member.userId, role)
+                    onChangeRole(member.id, role)
                     setShowRoleMenu(false)
                     onClose()
                   }}
@@ -126,7 +126,7 @@ export default function MemberActions({
               </button>
               <button
                 onClick={() => {
-                  onRemove(member.userId)
+                  onRemove(member.id)
                   setConfirmRemove(false)
                   onClose()
                 }}

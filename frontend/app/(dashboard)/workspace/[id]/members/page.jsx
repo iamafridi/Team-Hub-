@@ -31,7 +31,7 @@ export default function MembersPage() {
   const currentMember = members.find((m) => {
     if (!currentUser) return false
     if (m.user?.email === currentUser.email) return true
-    if (m.userId === currentUser.id) return true
+    if (m.id === currentUser.id) return true
     if (m.user?.id === currentUser.id) return true
     return false
   })
@@ -60,13 +60,13 @@ export default function MembersPage() {
     }
   }
 
-  async function handleChangeRole(userId, newRole) {
+  async function handleChangeRole(memberId, newRole) {
     if (!isAdmin) {
       toast.error('Only admins can change roles')
       return
     }
 
-    const memberIndex = members.findIndex((m) => m.userId === userId)
+    const memberIndex = members.findIndex((m) => m.id === memberId)
     if (memberIndex === -1) {
       toast.error('Member not found')
       return
@@ -78,16 +78,16 @@ export default function MembersPage() {
       await optimisticUpdate(
         () => {
           const snapshot = [...members]
-          setMembers(members.map((m) => (m.userId === userId ? { ...m, role: newRole } : m)))
-          updateMemberRole(userId, newRole)
+          setMembers(members.map((m) => (m.id === memberId ? { ...m, role: newRole } : m)))
+          updateMemberRole(memberId, newRole)
           return snapshot
         },
         async () => {
-          const res = await api.patch(`/workspaces/${workspaceId}/members/${userId}`, { role: newRole })
+          const res = await api.patch(`/workspaces/${workspaceId}/members/${memberId}`, { role: newRole })
         },
         (snapshot) => {
           setMembers(snapshot)
-          updateMember(userId, oldMember)
+          updateMember(memberId, oldMember)
         }
       )
       toast.success(`Role changed to ${newRole}`)
@@ -96,29 +96,29 @@ export default function MembersPage() {
     }
   }
 
-  async function handleChangeStatus(userId, isActive) {
+  async function handleChangeStatus(memberId, isActive) {
     if (!isAdmin) {
       toast.error('Only admins can change member status')
       return
     }
 
-    const memberIndex = members.findIndex((m) => m.userId === userId)
+    const memberIndex = members.findIndex((m) => m.id === memberId)
     const oldMember = members[memberIndex]
 
     try {
       await optimisticUpdate(
         () => {
           const snapshot = [...members]
-          setMembers(members.map((m) => (m.userId === userId ? { ...m, isActive } : m)))
-          updateMemberStatus(userId, isActive)
+          setMembers(members.map((m) => (m.id === memberId ? { ...m, isActive } : m)))
+          updateMemberStatus(memberId, isActive)
           return snapshot
         },
         async () => {
-          await api.patch(`/workspaces/${workspaceId}/members/${userId}/status`, { isActive })
+          await api.patch(`/workspaces/${workspaceId}/members/${memberId}/status`, { isActive })
         },
         (snapshot) => {
           setMembers(snapshot)
-          updateMember(userId, oldMember)
+          updateMember(memberId, oldMember)
         }
       )
       toast.success(isActive ? 'Member activated' : 'Member deactivated')
@@ -127,13 +127,13 @@ export default function MembersPage() {
     }
   }
 
-  async function handleRemoveMember(userId) {
+  async function handleRemoveMember(memberId) {
     if (!isAdmin) {
       toast.error('Only admins can remove members')
       return
     }
 
-    if (userId === currentMember?.userId) {
+    if (memberId === currentMember?.id) {
       toast.error('You cannot remove yourself')
       return
     }
@@ -142,12 +142,12 @@ export default function MembersPage() {
     try {
       await optimisticUpdate(
         () => {
-          setMembers(members.filter((m) => m.userId !== userId))
-          useWorkspaceStore.setState({ members: members.filter((m) => m.userId !== userId) })
+          setMembers(members.filter((m) => m.id !== memberId))
+          useWorkspaceStore.setState({ members: members.filter((m) => m.id !== memberId) })
           return snapshot
         },
         async () => {
-          await api.delete(`/workspaces/${workspaceId}/members/${userId}`)
+          await api.delete(`/workspaces/${workspaceId}/members/${memberId}`)
         },
         (prevSnapshot) => {
           setMembers(prevSnapshot)
