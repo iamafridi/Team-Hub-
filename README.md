@@ -2,7 +2,7 @@
 
 A production-ready team collaboration platform for goal tracking, task management, and real-time collaboration.
 
-**Live Demo**: [Coming Soon]
+**Live Demo**: https://team-hub.up.railway.app/workspace/demo-workspace-1/members
 
 ## ✨ Key Features
 
