@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Avatar, Button } from '@/components/ui'
-import { Trash2, AtSign } from 'lucide-react'
+import { Trash2, AtSign, MoreVertical } from 'lucide-react'
 import { Dropdown, DropdownItem } from '@/components/ui'
 
 export function CommentThread({
@@ -11,6 +11,7 @@ export function CommentThread({
   comments = [],
   onAddComment,
   onDeleteComment,
+  onEditComment,
   currentUserId,
   workspaceMembers = [],
 }) {
@@ -18,6 +19,8 @@ export function CommentThread({
   const [mentions, setMentions] = useState([])
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false)
   const [mentionQuery, setMentionQuery] = useState('')
+  const [editingCommentId, setEditingCommentId] = useState(null)
+  const [editingText, setEditingText] = useState('')
 
   const handleCommentChange = (e) => {
     const text = e.target.value
@@ -97,24 +100,73 @@ export function CommentThread({
               size="sm"
             />
             <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-text-primary">
-                  {comment.author?.name}
-                </span>
-                <span className="text-xs text-text-muted">
-                  {formatDate(comment.createdAt)}
-                </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-text-primary">
+                    {comment.author?.name}
+                  </span>
+                  <span className="text-xs text-text-muted">
+                    {formatDate(comment.createdAt)}
+                  </span>
+                </div>
+                {comment.authorId === currentUserId && editingCommentId !== comment.id && (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Dropdown trigger={<MoreVertical className="w-3 h-3" />} align="right">
+                      <DropdownItem
+                        onClick={() => {
+                          setEditingCommentId(comment.id)
+                          setEditingText(comment.content)
+                        }}
+                      >
+                        Edit
+                      </DropdownItem>
+                      <DropdownItem
+                        onClick={() => onDeleteComment?.(comment.id)}
+                        className="text-red-600"
+                      >
+                        Delete
+                      </DropdownItem>
+                    </Dropdown>
+                  </div>
+                )}
               </div>
-              <p className="text-sm text-text-primary mt-1 whitespace-pre-wrap break-words">
-                {comment.content}
-              </p>
-              {comment.authorId === currentUserId && (
-                <button
-                  onClick={() => onDeleteComment?.(comment.id)}
-                  className="text-xs text-text-muted hover:text-red-600 mt-2 transition-colors"
-                >
-                  Delete
-                </button>
+
+              {editingCommentId === comment.id ? (
+                <div className="mt-2 space-y-2">
+                  <textarea
+                    value={editingText}
+                    onChange={(e) => setEditingText(e.target.value)}
+                    className="w-full p-2 rounded-lg border border-border bg-surface text-text-primary focus:outline-none focus:border-accent resize-none text-sm"
+                    rows="2"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => {
+                        onEditComment?.(comment.id, editingText)
+                        setEditingCommentId(null)
+                        setEditingText('')
+                      }}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        setEditingCommentId(null)
+                        setEditingText('')
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-text-primary mt-1 whitespace-pre-wrap break-words">
+                  {comment.content}
+                </p>
               )}
             </div>
           </motion.div>

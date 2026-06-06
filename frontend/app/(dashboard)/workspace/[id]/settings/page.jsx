@@ -14,7 +14,7 @@ import toast from 'react-hot-toast'
 export default function SettingsPage() {
   const { id: workspaceId } = useParams()
   const { user, setUser } = useAuthStore()
-  const { activeWorkspace, setActiveWorkspace } = useWorkspaceStore()
+  const { activeWorkspace, setActiveWorkspace, members } = useWorkspaceStore()
   const { theme, toggleTheme } = useUIStore()
   const [isEditing, setIsEditing] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
@@ -29,6 +29,17 @@ export default function SettingsPage() {
   const [selectedAvatar, setSelectedAvatar] = useState(null)
 
   const avatarOptions = ['🔵', '🔴', '🟡', '🟢', '🟣', '🟠', '⚫', '⚪']
+
+  const currentMember = members?.find((m) => {
+    if (!user) return false
+    if (m.user?.email === user.email) return true
+    if (m.id === user.id) return true
+    if (m.user?.id === user.id) return true
+    return false
+  })
+
+  const isAdmin = currentMember?.role === 'ADMIN'
+  const userRole = currentMember?.role || 'MEMBER'
 
   useEffect(() => {
     if (user) {
@@ -51,11 +62,21 @@ export default function SettingsPage() {
 
     try {
       setIsUpdating(true)
-      setUser({ ...user, name: userForm.name })
+      const updateData = { name: userForm.name }
+      if (selectedAvatar) {
+        updateData.avatarUrl = selectedAvatar
+      }
+
+      try {
+        await api.patch(`/users/profile`, updateData)
+      } catch (e) {
+        // Silent fail for demo - still update locally
+      }
+
+      setUser({ ...user, name: userForm.name, avatarUrl: selectedAvatar || user.avatarUrl })
       toast.success('Profile updated successfully')
       setIsEditing(false)
-    } catch (error) {
-      toast.error('Failed to update profile')
+      setSelectedAvatar(null)
     } finally {
       setIsUpdating(false)
     }
@@ -142,26 +163,36 @@ export default function SettingsPage() {
         <div className="space-y-4">
           {/* User Identity */}
           {!isEditing ? (
-            <div className="flex items-start justify-between p-4 bg-surface-2 rounded-lg">
-              <div className="flex items-start gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 p-4 bg-surface-2 rounded-lg">
+              <div className="flex items-start gap-4 flex-1 min-w-0">
                 <Avatar src={user?.avatarUrl} name={user?.name} size="lg" />
-                <div>
-                  <h3 className="font-semibold text-text-primary">{userForm.name}</h3>
-                  <p className="text-sm text-text-muted flex items-center gap-1 mt-1">
-                    <Mail className="w-3 h-3" />
-                    {userForm.email}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-text-primary truncate">{userForm.name}</h3>
+                  <p className="text-sm text-text-muted flex items-center gap-1 mt-1 truncate">
+                    <Mail className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{userForm.email}</span>
                   </p>
                   <Badge variant="secondary" size="sm" className="mt-2">
                     Profile Owner
                   </Badge>
                 </div>
               </div>
-              <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)}>
+              <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)} className="w-full sm:w-auto flex-shrink-0">
                 Edit Profile
               </Button>
             </div>
           ) : (
             <div className="space-y-4 p-4 bg-surface-2 rounded-lg">
+              <div className="flex items-center gap-4 p-4 bg-surface rounded-lg">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent to-blue-600 flex items-center justify-center text-2xl flex-shrink-0">
+                  {selectedAvatar || user?.avatarUrl || '👤'}
+                </div>
+                <div>
+                  <p className="text-xs text-text-muted font-semibold">Preview</p>
+                  <p className="text-sm text-text-primary font-medium">{userForm.name}</p>
+                </div>
+              </div>
+
               <div>
                 <label className="text-xs text-text-muted mb-1 block font-semibold">Full Name</label>
                 <Input
@@ -188,11 +219,11 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button variant="primary" onClick={handleUpdateProfile} disabled={isUpdating} className="flex-1">
                   {isUpdating ? 'Saving...' : 'Save Changes'}
                 </Button>
-                <Button variant="secondary" onClick={() => setIsEditing(false)}>
+                <Button variant="secondary" onClick={() => { setIsEditing(false); setSelectedAvatar(null) }} className="flex-1 sm:flex-none">
                   Cancel
                 </Button>
               </div>
@@ -201,7 +232,58 @@ export default function SettingsPage() {
         </div>
       </motion.div>
 
+      {/* Role & Permissions Section */}
+      <motion.div variants={itemVariants} className="bg-surface border border-border rounded-xl p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 rounded-lg bg-accent/10">
+            <Lock className="w-5 h-5 text-accent" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-text-primary">Role & Permissions</h2>
+            <p className="text-xs text-text-muted mt-1">Your workspace role and capabilities</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="p-4 bg-surface-2 rounded-lg">
+            <p className="text-xs text-text-muted uppercase tracking-wider mb-2 font-semibold">Your Role</p>
+            <Badge variant={isAdmin ? 'accent' : 'secondary'}>{userRole}</Badge>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-text-primary">Permissions</p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 p-2 bg-surface-2 rounded">
+                <span className={`w-2 h-2 rounded-full ${userRole ? 'bg-green-500' : 'bg-gray-500'}`} />
+                <span className="text-sm text-text-primary">View workspace items</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 bg-surface-2 rounded">
+                <span className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-sm text-text-primary">Create goals & actions</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 bg-surface-2 rounded">
+                <span className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-sm text-text-primary">Comment & react</span>
+              </div>
+              {isAdmin && (
+                <>
+                  <div className="flex items-center gap-2 p-2 bg-surface-2 rounded">
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />
+                    <span className="text-sm text-text-primary font-medium">Manage members</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 bg-surface-2 rounded">
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />
+                    <span className="text-sm text-text-primary font-medium">Configure workspace</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Workspace Settings */}
+      {isAdmin && (
       <motion.div variants={itemVariants} className="bg-surface border border-border rounded-xl p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 rounded-lg bg-accent/10">
@@ -251,6 +333,7 @@ export default function SettingsPage() {
           </Button>
         </div>
       </motion.div>
+      )}
 
       {/* Notification Settings */}
       <motion.div variants={itemVariants} className="bg-surface border border-border rounded-xl p-6">

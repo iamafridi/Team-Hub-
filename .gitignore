@@ -50,6 +50,11 @@ prisma/dev.db-journal
 CHANGELOG.md
 CHANGELOG
 changelog.md
+docs/
+COMPLETE_GUIDE.md
+BACKEND_SETUP.md
+API_REFERENCE.md
+DEPLOYMENT_GUIDE.md
 docs/api-reference/
 docs/CHANGELOG*
 DEPLOYMENT.md

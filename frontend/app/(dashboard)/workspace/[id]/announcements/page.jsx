@@ -10,6 +10,7 @@ import { Button, EmptyState, SkeletonCard, Modal } from '@/components/ui'
 import { AnnouncementCard } from '@/components/announcements/AnnouncementCard'
 import { AnnouncementModal } from '@/components/announcements/AnnouncementModal'
 import { CommentThread } from '@/components/announcements/CommentThread'
+import { useSocket } from '@/hooks/useSocket'
 import { Megaphone, Plus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { mockAnnouncements } from '@/lib/mockData'
@@ -25,6 +26,62 @@ export default function AnnouncementsPage() {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null)
   const [comments, setComments] = useState([])
   const [loadingComments, setLoadingComments] = useState(false)
+  const socket = useSocket()
+
+  // Real-time updates for announcements
+  useEffect(() => {
+    if (!socket) return
+
+    socket.on('announcement:reaction-added', (data) => {
+      setAnnouncements(announcements.map((a) =>
+        a.id === data.announcementId
+          ? {
+              ...a,
+              reactions: [...(a.reactions || []), { emoji: data.emoji, userId: data.userId }],
+            }
+          : a
+      ))
+    })
+
+    socket.on('announcement:reaction-removed', (data) => {
+      setAnnouncements(announcements.map((a) =>
+        a.id === data.announcementId
+          ? {
+              ...a,
+              reactions: (a.reactions || []).filter(
+                (r) => !(r.emoji === data.emoji && r.userId === data.userId)
+              ),
+            }
+          : a
+      ))
+    })
+
+    socket.on('announcement:comment-added', (data) => {
+      if (selectedAnnouncement?.id === data.announcementId) {
+        setComments([...comments, data.comment])
+      }
+    })
+
+    socket.on('announcement:comment-updated', (data) => {
+      setComments(comments.map((c) =>
+        c.id === data.commentId ? { ...c, content: data.content } : c
+      ))
+    })
+
+    socket.on('announcement:updated', (data) => {
+      setAnnouncements(announcements.map((a) =>
+        a.id === data.id ? { ...a, ...data } : a
+      ))
+    })
+
+    return () => {
+      socket.off('announcement:reaction-added')
+      socket.off('announcement:reaction-removed')
+      socket.off('announcement:comment-added')
+      socket.off('announcement:comment-updated')
+      socket.off('announcement:updated')
+    }
+  }, [socket, announcements, comments, selectedAnnouncement])
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
@@ -65,14 +122,31 @@ export default function AnnouncementsPage() {
 
   const handleCreateAnnouncement = async (formData) => {
     try {
-      const response = await api.post(`/workspaces/${workspaceId}/announcements`, formData)
-      const newAnnouncement = response.data.data
-      setAnnouncements([newAnnouncement, ...announcements])
-      toast.success('Announcement posted')
+      if (editingAnnouncement) {
+        // Update existing announcement
+        await api.patch(`/workspaces/${workspaceId}/announcements/${editingAnnouncement.id}`, formData)
+        setAnnouncements(announcements.map((a) =>
+          a.id === editingAnnouncement.id ? { ...a, ...formData } : a
+        ))
+        toast.success('Announcement updated')
+      } else {
+        // Create new announcement
+        const response = await api.post(`/workspaces/${workspaceId}/announcements`, formData)
+        const newAnnouncement = response.data.data
+        setAnnouncements([newAnnouncement, ...announcements])
+
+        // Notify all workspace members
+        members?.forEach((member) => {
+          if (member.id !== user.id) {
+            toast(`New announcement from ${user?.name}`, { icon: '📢' })
+          }
+        })
+        toast.success('Announcement posted to all members')
+      }
       closeModal()
       setEditingAnnouncement(null)
     } catch (error) {
-      toast.error('Failed to post announcement')
+      toast.error(editingAnnouncement ? 'Failed to update announcement' : 'Failed to post announcement')
     }
   }
 
@@ -182,6 +256,21 @@ export default function AnnouncementsPage() {
     }
   }
 
+  const handleEditComment = async (commentId, newContent) => {
+    try {
+      await api.patch(
+        `/workspaces/${workspaceId}/announcements/${selectedAnnouncement.id}/comments/${commentId}`,
+        { content: newContent }
+      )
+      setComments(comments.map((c) =>
+        c.id === commentId ? { ...c, content: newContent } : c
+      ))
+      toast.success('Comment updated')
+    } catch (error) {
+      toast.error('Failed to update comment')
+    }
+  }
+
   const handleEditAnnouncement = (announcement) => {
     setEditingAnnouncement(announcement)
     openModal('create-announcement')
@@ -270,6 +359,7 @@ export default function AnnouncementsPage() {
             comments={comments}
             onAddComment={handleAddComment}
             onDeleteComment={handleDeleteComment}
+            onEditComment={handleEditComment}
             currentUserId={user?.id}
             workspaceMembers={members}
           />

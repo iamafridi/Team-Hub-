@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import { Card, Badge, Avatar } from '@/components/ui'
 import { ProgressBar } from '@/components/ui'
-import { MoreVertical, Trash2, MessageSquare, Plus, Minus } from 'lucide-react'
+import { MoreVertical, Trash2, MessageSquare, Plus, Minus, User, Users } from 'lucide-react'
 import { Dropdown, DropdownItem } from '@/components/ui'
 
 export function GoalCard({
@@ -13,6 +13,8 @@ export function GoalCard({
   onClick,
   onCommentClick,
   onProgressChange,
+  onAssign,
+  workspaceMembers,
   className = '',
 }) {
   const statusColors = {
@@ -82,9 +84,34 @@ export function GoalCard({
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Badge variant={statusColors[goal.status]}>
-              {goal.status.replace(/_/g, ' ')}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant={statusColors[goal.status]}>
+                {goal.status.replace(/_/g, ' ')}
+              </Badge>
+              {goal.assignee && (
+                <Avatar
+                  src={goal.assignee?.avatarUrl}
+                  name={goal.assignee?.name}
+                  size="xs"
+                  title={`Assigned to ${goal.assignee?.name}`}
+                />
+              )}
+              {!goal.assignee && workspaceMembers && (
+                <div onClick={(e) => e.stopPropagation()}>
+                  <Dropdown
+                    trigger={<User className="w-4 h-4 text-text-muted hover:text-accent cursor-pointer" />}
+                    align="right"
+                  >
+                    <DropdownItem disabled className="text-xs text-text-muted">Assign to</DropdownItem>
+                    {workspaceMembers?.map((member) => (
+                      <DropdownItem key={member.id} onClick={() => onAssign?.(goal.id, member.id)}>
+                        {member.user?.name}
+                      </DropdownItem>
+                    ))}
+                  </Dropdown>
+                </div>
+              )}
+            </div>
             {formattedDue && (
               <span className="text-xs text-text-muted">
                 {formattedDue}

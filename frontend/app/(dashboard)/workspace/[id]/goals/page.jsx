@@ -24,7 +24,7 @@ export default function GoalsPage() {
   const { openModal, closeModal, activeModal } = useUIStore()
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('All')
-  const [formData, setFormData] = useState({ title: '', description: '', dueDate: '' })
+  const [formData, setFormData] = useState({ title: '', description: '', dueDate: '', progress: 0 })
   const [editingGoal, setEditingGoal] = useState(null)
   const [commentTarget, setCommentTarget] = useState(null)
 
@@ -56,6 +56,7 @@ export default function GoalsPage() {
       title: goal.title,
       description: goal.description || '',
       dueDate: goal.dueDate ? goal.dueDate.split('T')[0] : '',
+      progress: goal.progress || 0,
     })
     openModal('create-goal')
   }
@@ -95,8 +96,7 @@ export default function GoalsPage() {
         const newGoal = {
           id: `goal-${Date.now()}`,
           ...formData,
-          status: 'in_progress',
-          progress: 0,
+          status: 'ON_TRACK',
           owner: { id: 'user-1', name: 'Demo User' },
         }
         addGoal(newGoal)
@@ -105,7 +105,7 @@ export default function GoalsPage() {
     }
 
     closeModal()
-    setFormData({ title: '', description: '', dueDate: '' })
+    setFormData({ title: '', description: '', dueDate: '', progress: 0 })
     setEditingGoal(null)
   }
 
@@ -139,6 +139,25 @@ export default function GoalsPage() {
     } catch (error) {
       updateGoal(goalId, originalGoal)
       toast.error('Failed to update progress')
+    }
+  }
+
+  const handleAssignGoal = async (goalId, memberId) => {
+    const goal = goals.find((g) => g.id === goalId)
+    if (!goal) return
+
+    const assignee = members?.find((m) => m.id === memberId)
+    const originalGoal = { ...goal }
+    updateGoal(goalId, { ...goal, assignee })
+
+    try {
+      await api.patch(`/workspaces/${workspaceId}/goals/${goalId}`, {
+        assigneeId: memberId,
+      })
+      toast.success(`Goal assigned to ${assignee?.user?.name}`)
+    } catch (error) {
+      updateGoal(goalId, originalGoal)
+      toast.error('Failed to assign goal')
     }
   }
 
@@ -200,6 +219,8 @@ export default function GoalsPage() {
               onClick={() => handleEditGoal(goal)}
               onCommentClick={handleCommentClick}
               onProgressChange={handleProgressChange}
+              onAssign={handleAssignGoal}
+              workspaceMembers={members}
             />
           ))}
         </div>
@@ -209,7 +230,7 @@ export default function GoalsPage() {
         isOpen={activeModal === 'create-goal'}
         onClose={() => {
           closeModal()
-          setFormData({ title: '', description: '', dueDate: '' })
+          setFormData({ title: '', description: '', dueDate: '', progress: 0 })
           setEditingGoal(null)
         }}
         title={editingGoal ? 'Edit Goal' : 'Create Goal'}
@@ -234,6 +255,17 @@ export default function GoalsPage() {
             value={formData.dueDate}
             onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
           />
+          <div>
+            <label className="text-xs text-text-muted mb-2 block font-semibold">Progress: {formData.progress}%</label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={formData.progress}
+              onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) })}
+              className="w-full"
+            />
+          </div>
           <div className="flex gap-2">
             <Button type="submit" variant="primary" className="flex-1">
               {editingGoal ? 'Save Changes' : 'Create'}
@@ -243,7 +275,7 @@ export default function GoalsPage() {
               variant="secondary"
               onClick={() => {
                 closeModal()
-                setFormData({ title: '', description: '', dueDate: '' })
+                setFormData({ title: '', description: '', dueDate: '', progress: 0 })
                 setEditingGoal(null)
               }}
               className="flex-1"
