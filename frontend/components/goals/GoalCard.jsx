@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import { Card, Badge, Avatar } from '@/components/ui'
 import { ProgressBar } from '@/components/ui'
-import { MoreVertical, Trash2 } from 'lucide-react'
+import { MoreVertical, Trash2, MessageSquare, Plus, Minus } from 'lucide-react'
 import { Dropdown, DropdownItem } from '@/components/ui'
 
 export function GoalCard({
@@ -11,6 +11,8 @@ export function GoalCard({
   onEdit,
   onDelete,
   onClick,
+  onCommentClick,
+  onProgressChange,
   className = '',
 }) {
   const statusColors = {
@@ -90,11 +92,40 @@ export function GoalCard({
             )}
           </div>
 
-          <ProgressBar value={avgProgress} size="sm" />
+          <ProgressBar value={goal.progress || 0} size="sm" />
 
-          <div className="flex justify-between text-xs text-text-muted">
-            <span>{avgProgress}% progress</span>
-            <span>{goal._count?.actionItems || 0} actions</span>
+          <div className="flex justify-between items-center text-xs text-text-muted">
+            <div className="flex gap-4">
+              <span>{goal.progress || 0}% progress</span>
+              <span>{goal._count?.actionItems || 0} actions</span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onCommentClick?.(goal)
+              }}
+              className="flex items-center gap-1 text-text-muted hover:text-accent transition-colors"
+            >
+              <MessageSquare className="w-3 h-3" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1 pt-1" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => onProgressChange?.(goal.id, Math.max(0, (goal.progress || 0) - 10))}
+              className="p-1 rounded hover:bg-surface-2 transition-colors text-text-muted hover:text-text-primary"
+              title="Decrease 10%"
+            >
+              <Minus className="w-3 h-3" />
+            </button>
+            <div className="flex-1" />
+            <button
+              onClick={() => onProgressChange?.(goal.id, Math.min(100, (goal.progress || 0) + 10))}
+              className="p-1 rounded hover:bg-surface-2 transition-colors text-text-muted hover:text-text-primary"
+              title="Increase 10%"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
           </div>
         </div>
       </Card>

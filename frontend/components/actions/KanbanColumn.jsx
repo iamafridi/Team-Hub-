@@ -13,6 +13,8 @@ export function KanbanColumn({
   onDragOver,
   onDrop,
   isOver = false,
+  onCommentClick,
+  onProgressChange,
 }) {
   return (
     <div
@@ -59,6 +61,8 @@ export function KanbanColumn({
                   action={action}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onCommentClick={onCommentClick}
+                  onProgressChange={onProgressChange}
                 />
               </div>
             ))}

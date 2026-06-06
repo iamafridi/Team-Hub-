@@ -1,18 +1,64 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { useWorkspaceStore } from '@/store/workspaceStore'
+import { useNotificationStore } from '@/store/notificationStore'
+import api from '@/lib/api'
 import { motion } from 'framer-motion'
 import { Zap, Target, Users, Bell } from 'lucide-react'
+import {
+  DashboardGoalsModal,
+  DashboardMembersModal,
+  DashboardNotificationsModal,
+  DashboardWorkspacesModal,
+} from '@/components/dashboard/DashboardModals'
 
 export default function Dashboard() {
   const { user } = useAuthStore()
+  const { workspaces, activeWorkspace } = useWorkspaceStore()
+  const { notifications } = useNotificationStore()
+  const [openModal, setOpenModal] = useState(null)
+  const [stats, setStats] = useState([
+    { label: 'Total Workspaces', value: '—', icon: Zap, color: 'from-blue-500 to-blue-600' },
+    { label: 'Active Goals', value: '—', icon: Target, color: 'from-purple-500 to-purple-600' },
+    { label: 'Team Members', value: '—', icon: Users, color: 'from-green-500 to-green-600' },
+    { label: 'Notifications', value: '—', icon: Bell, color: 'from-orange-500 to-orange-600' },
+  ])
 
-  const stats = [
-    { label: 'Total Workspaces', value: '1', icon: Zap, color: 'from-blue-500 to-blue-600' },
-    { label: 'Active Goals', value: '0', icon: Target, color: 'from-purple-500 to-purple-600' },
-    { label: 'Team Members', value: '0', icon: Users, color: 'from-green-500 to-green-600' },
-    { label: 'Notifications', value: '0', icon: Bell, color: 'from-orange-500 to-orange-600' },
-  ]
+  useEffect(() => {
+    if (!activeWorkspace?.id) return
+
+    const fetchStats = async () => {
+      try {
+        const [goalsRes, membersRes] = await Promise.all([
+          api.get(`/workspaces/${activeWorkspace.id}/goals`),
+          api.get(`/workspaces/${activeWorkspace.id}/members`),
+        ])
+
+        const activeGoals = goalsRes.data.data.filter((g) => g.status !== 'COMPLETED').length
+        const memberCount = membersRes.data.data.length
+
+        setStats([
+          { label: 'Total Workspaces', value: workspaces.length.toString(), icon: Zap, color: 'from-blue-500 to-blue-600' },
+          { label: 'Active Goals', value: activeGoals.toString(), icon: Target, color: 'from-purple-500 to-purple-600' },
+          { label: 'Team Members', value: memberCount.toString(), icon: Users, color: 'from-green-500 to-green-600' },
+          { label: 'Notifications', value: notifications.length.toString(), icon: Bell, color: 'from-orange-500 to-orange-600' },
+        ])
+      } catch (error) {
+        console.error('Failed to fetch stats:', error)
+      }
+    }
+
+    fetchStats()
+  }, [activeWorkspace?.id, workspaces.length, notifications.length])
+
+  const cardModalMap = {
+    'Total Workspaces': 'workspaces',
+    'Active Goals': 'goals',
+    'Team Members': 'members',
+    'Notifications': 'notifications',
+  }
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -66,7 +112,8 @@ export default function Dashboard() {
               key={index}
               variants={itemVariants}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="group"
+              className="group cursor-pointer"
+              onClick={() => setOpenModal(cardModalMap[stat.label])}
             >
               <div className={`bg-gradient-to-br ${stat.color} p-0.5 rounded-xl`}>
                 <div className="bg-surface p-6 rounded-[10px] hover:bg-surface-2 transition-colors duration-300">
@@ -105,6 +152,37 @@ export default function Dashboard() {
           </div>
         </div>
       </motion.div>
+
+      {/* Modals */}
+      {openModal === 'goals' && (
+        <DashboardGoalsModal
+          workspaceId={activeWorkspace?.id}
+          isOpen
+          onClose={() => setOpenModal(null)}
+          currentUser={user}
+        />
+      )}
+      {openModal === 'members' && (
+        <DashboardMembersModal
+          workspaceId={activeWorkspace?.id}
+          isOpen
+          onClose={() => setOpenModal(null)}
+          currentUser={user}
+        />
+      )}
+      {openModal === 'notifications' && (
+        <DashboardNotificationsModal
+          isOpen
+          onClose={() => setOpenModal(null)}
+        />
+      )}
+      {openModal === 'workspaces' && (
+        <DashboardWorkspacesModal
+          isOpen
+          onClose={() => setOpenModal(null)}
+          currentUser={user}
+        />
+      )}
     </motion.div>
   )
 }

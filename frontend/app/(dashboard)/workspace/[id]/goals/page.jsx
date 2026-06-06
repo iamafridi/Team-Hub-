@@ -5,9 +5,11 @@ import { useParams } from 'next/navigation'
 import { useGoalStore } from '@/store/goalStore'
 import { useUIStore } from '@/store/uiStore'
 import { useWorkspaceStore } from '@/store/workspaceStore'
+import { useAuthStore } from '@/store/authStore'
 import api from '@/lib/api'
 import { Button, Badge, EmptyState, SkeletonCard, Modal, Input } from '@/components/ui'
 import { GoalCard } from '@/components/goals/GoalCard'
+import { EntityCommentThread } from '@/components/comments/EntityCommentThread'
 import { Target, Plus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { mockGoals } from '@/lib/mockData'
@@ -17,11 +19,14 @@ const statusFilters = ['All', 'ON_TRACK', 'AT_RISK', 'BEHIND', 'COMPLETED']
 export default function GoalsPage() {
   const { id: workspaceId } = useParams()
   const { goals, setGoals, addGoal, removeGoal, updateGoal } = useGoalStore()
+  const { members } = useWorkspaceStore()
+  const { user } = useAuthStore()
   const { openModal, closeModal, activeModal } = useUIStore()
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('All')
   const [formData, setFormData] = useState({ title: '', description: '', dueDate: '' })
   const [editingGoal, setEditingGoal] = useState(null)
+  const [commentTarget, setCommentTarget] = useState(null)
 
   useEffect(() => {
     const fetchGoals = async () => {
@@ -115,6 +120,28 @@ export default function GoalsPage() {
     }
   }
 
+  const handleCommentClick = (goal) => {
+    setCommentTarget(goal)
+    openModal('entity-comment-goal')
+  }
+
+  const handleProgressChange = async (goalId, newProgress) => {
+    const goal = goals.find((g) => g.id === goalId)
+    if (!goal) return
+
+    const originalGoal = { ...goal }
+    updateGoal(goalId, { ...goal, progress: newProgress })
+
+    try {
+      await api.patch(`/workspaces/${workspaceId}/goals/${goalId}`, {
+        progress: newProgress,
+      })
+    } catch (error) {
+      updateGoal(goalId, originalGoal)
+      toast.error('Failed to update progress')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -171,6 +198,8 @@ export default function GoalsPage() {
               onDelete={handleDeleteGoal}
               onEdit={handleEditGoal}
               onClick={() => handleEditGoal(goal)}
+              onCommentClick={handleCommentClick}
+              onProgressChange={handleProgressChange}
             />
           ))}
         </div>
@@ -223,6 +252,25 @@ export default function GoalsPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={activeModal === 'entity-comment-goal'}
+        onClose={() => {
+          closeModal()
+          setCommentTarget(null)
+        }}
+        title="Comments"
+      >
+        {commentTarget && (
+          <EntityCommentThread
+            workspaceId={workspaceId}
+            entityType="goal"
+            entityId={commentTarget.id}
+            currentUserId={user?.id}
+            workspaceMembers={members}
+          />
+        )}
       </Modal>
     </div>
   )

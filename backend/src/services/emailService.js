@@ -79,7 +79,39 @@ async function sendMentionEmail(to, mentionedByName, workspaceName, commentPrevi
   }
 }
 
+async function sendAssignmentEmail(to, assignedByName, actionTitle, workspaceName, actionLink) {
+  if (!transporter) return
+
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject: `You've been assigned to "${actionTitle}" in ${workspaceName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #6366F1; padding: 20px; color: white; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0;">Team Hub</h1>
+          </div>
+          <div style="padding: 30px; background-color: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 0 0 10px 10px;">
+            <h2>You've been assigned!</h2>
+            <p>Hi there,</p>
+            <p><strong>${assignedByName}</strong> has assigned you to <strong>${actionTitle}</strong> in <strong>${workspaceName}</strong>.</p>
+            <a href="${actionLink}" style="display: inline-block; background-color: #6366F1; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; margin: 20px 0;">
+              View Action
+            </a>
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;" />
+            <p style="color: #666; font-size: 12px;">Team Hub — Collaborative workspace for teams</p>
+          </div>
+        </div>
+      `,
+    })
+  } catch (error) {
+    console.error('Error sending assignment email:', error)
+  }
+}
+
 module.exports = {
   sendInviteEmail,
   sendMentionEmail,
+  sendAssignmentEmail,
 }

@@ -5,11 +5,13 @@ import { useParams } from 'next/navigation'
 import { useActionStore } from '@/store/actionStore'
 import { useWorkspaceStore } from '@/store/workspaceStore'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import api from '@/lib/api'
-import { Button, EmptyState, SkeletonCard } from '@/components/ui'
+import { Button, EmptyState, SkeletonCard, Modal } from '@/components/ui'
 import { KanbanBoard } from '@/components/actions/KanbanBoard'
 import { ListView } from '@/components/actions/ListView'
 import { ActionModal } from '@/components/actions/ActionModal'
+import { EntityCommentThread } from '@/components/comments/EntityCommentThread'
 import { ListChecks, Plus, Layout, List } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { mockActions } from '@/lib/mockData'
@@ -18,10 +20,12 @@ export default function ActionsPage() {
   const { id: workspaceId } = useParams()
   const { actions, setActions, addAction, updateAction, removeAction, reorderActions } = useActionStore()
   const { members } = useWorkspaceStore()
+  const { user } = useAuthStore()
   const { openModal, closeModal, activeModal, modalData } = useUIStore()
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState('kanban')
   const [editingAction, setEditingAction] = useState(null)
+  const [commentTarget, setCommentTarget] = useState(null)
 
   useEffect(() => {
     const fetchActions = async () => {
@@ -103,6 +107,28 @@ export default function ActionsPage() {
     openModal('create-action')
   }
 
+  const handleCommentClick = (action) => {
+    setCommentTarget(action)
+    openModal('entity-comment-action')
+  }
+
+  const handleProgressChange = async (actionId, newProgress) => {
+    const action = actions.find((a) => a.id === actionId)
+    if (!action) return
+
+    const originalAction = { ...action }
+    updateAction(actionId, { ...action, progress: newProgress })
+
+    try {
+      await api.patch(`/workspaces/${workspaceId}/actions/${actionId}`, {
+        progress: newProgress,
+      })
+    } catch (error) {
+      updateAction(actionId, originalAction)
+      toast.error('Failed to update progress')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -169,12 +195,16 @@ export default function ActionsPage() {
           onEdit={handleEditAction}
           onDelete={handleDeleteAction}
           onReorder={handleReorder}
+          onCommentClick={handleCommentClick}
+          onProgressChange={handleProgressChange}
         />
       ) : (
         <ListView
           actions={actions}
           onEdit={handleEditAction}
           onDelete={handleDeleteAction}
+          onCommentClick={handleCommentClick}
+          onProgressChange={handleProgressChange}
         />
       )}
 
@@ -189,6 +219,25 @@ export default function ActionsPage() {
         workspaceMembers={members}
         goalId={modalData?.goalId}
       />
+
+      <Modal
+        isOpen={activeModal === 'entity-comment-action'}
+        onClose={() => {
+          closeModal()
+          setCommentTarget(null)
+        }}
+        title="Comments"
+      >
+        {commentTarget && (
+          <EntityCommentThread
+            workspaceId={workspaceId}
+            entityType="action"
+            entityId={commentTarget.id}
+            currentUserId={user?.id}
+            workspaceMembers={members}
+          />
+        )}
+      </Modal>
     </div>
   )
 }

@@ -18,6 +18,7 @@ const updateGoalSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
   status: z.enum(['ON_TRACK', 'AT_RISK', 'BEHIND', 'COMPLETED']).optional(),
+  progress: z.number().int().min(0).max(100).optional(),
   dueDate: z.string().datetime().optional(),
 })
 
@@ -28,16 +29,18 @@ router.get('/:workspaceId/goals', async (req, res) => {
       include: {
         owner: { select: { id: true, name: true, avatarUrl: true } },
         _count: { select: { milestones: true, actionItems: true } },
-        milestones: { select: { progress: true } },
+        actionItems: { select: { id: true, status: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
     const enriched = goals.map(g => {
-      const avgProgress = g.milestones.length ? Math.round(g.milestones.reduce((sum, m) => sum + m.progress, 0) / g.milestones.length) : 0
+      const doneCount = g.actionItems.filter(a => a.status === 'DONE').length
+      const totalCount = g.actionItems.length
+      const calculatedProgress = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0
       return {
         ...g,
-        milestones: undefined,
-        avgMilestoneProgress: avgProgress,
+        actionItems: undefined,
+        progress: calculatedProgress,
       }
     })
     res.json({ data: enriched, message: 'Goals fetched' })
@@ -91,14 +94,19 @@ router.get('/:workspaceId/goals/:goalId', async (req, res) => {
           orderBy: { createdAt: 'desc' },
         },
         actionItems: {
-          select: { id: true, title: true, status: true, priority: true },
+          select: { id: true, title: true, status: true, priority: true, assigneeId: true, assignee: { select: { id: true, name: true, avatarUrl: true } } },
         },
       },
     })
     if (!goal) {
       return res.status(404).json({ error: 'Goal not found' })
     }
-    res.json({ data: goal, message: 'Goal fetched' })
+
+    const doneCount = goal.actionItems.filter(a => a.status === 'DONE').length
+    const totalCount = goal.actionItems.length
+    const calculatedProgress = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0
+
+    res.json({ data: { ...goal, progress: calculatedProgress }, message: 'Goal fetched' })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Server error' })
@@ -107,22 +115,35 @@ router.get('/:workspaceId/goals/:goalId', async (req, res) => {
 
 router.patch('/:workspaceId/goals/:goalId', async (req, res) => {
   try {
-    const { title, description, status, dueDate } = updateGoalSchema.parse(req.body)
+    const { title, description, status, progress, dueDate } = updateGoalSchema.parse(req.body)
     const goal = await prisma.goal.findUnique({ where: { id: req.params.goalId } })
     if (goal.ownerId !== req.userId && req.memberRole !== 'ADMIN') {
       return res.status(403).json({ error: 'Forbidden' })
     }
+
+    let finalProgress = progress
+    if (progress === undefined) {
+      const actionItems = await prisma.actionItem.findMany({
+        where: { goalId: req.params.goalId },
+      })
+      const doneCount = actionItems.filter(a => a.status === 'DONE').length
+      const totalCount = actionItems.length
+      finalProgress = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0
+    }
+
     const updated = await prisma.goal.update({
       where: { id: req.params.goalId },
       data: {
         ...(title && { title }),
         ...(description !== undefined && { description }),
         ...(status && { status }),
+        ...(progress !== undefined && { progress: finalProgress }),
         ...(dueDate && { dueDate: new Date(dueDate) }),
       },
       include: {
         owner: { select: { id: true, name: true, avatarUrl: true } },
         milestones: true,
+        actionItems: { select: { id: true, title: true, status: true, priority: true, assigneeId: true } },
       },
     })
     logAction(req.userId, req.params.workspaceId, 'UPDATE', 'Goal', req.params.goalId)
@@ -130,7 +151,7 @@ router.patch('/:workspaceId/goals/:goalId', async (req, res) => {
     res.json({ data: updated, message: 'Goal updated' })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input' })
+      return res.status(400).json({ error: 'Invalid input', details: error.errors })
     }
     console.error(error)
     res.status(500).json({ error: 'Server error' })

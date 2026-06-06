@@ -73,6 +73,7 @@ model Goal {
   title       String
   description String?
   status      GoalStatus @default(ON_TRACK)
+  progress    Int        @default(0)
   dueDate     DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -83,6 +84,7 @@ model Goal {
   milestones  Milestone[]
   actionItems ActionItem[]
   updates     GoalUpdate[]
+  comments    Comment[]
 }
 
 model Milestone {
@@ -112,6 +114,7 @@ model ActionItem {
   description String?
   priority    Priority     @default(MEDIUM)
   status      ActionStatus @default(TODO)
+  progress    Int          @default(0)
   dueDate     DateTime?
   position    Int          @default(0)
   createdAt   DateTime     @default(now())
@@ -122,6 +125,7 @@ model ActionItem {
   assignee    User?      @relation(fields: [assigneeId], references: [id])
   goal        Goal?      @relation(fields: [goalId], references: [id])
   workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  comments    Comment[]
 }
 
 model Announcement {
@@ -140,13 +144,17 @@ model Announcement {
 }
 
 model Comment {
-  id             String   @id @default(cuid())
+  id             String        @id @default(cuid())
   content        String
-  createdAt      DateTime @default(now())
+  createdAt      DateTime      @default(now())
   authorId       String
-  announcementId String
-  author         User         @relation(fields: [authorId], references: [id])
-  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  announcementId String?
+  actionItemId   String?
+  goalId         String?
+  author         User          @relation(fields: [authorId], references: [id])
+  announcement   Announcement? @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  actionItem     ActionItem?   @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  goal           Goal?         @relation(fields: [goalId], references: [id], onDelete: Cascade)
   mentions       Mention[]
 }
 
@@ -229,4 +237,5 @@ enum NotificationType {
   INVITE
   GOAL_UPDATE
   ANNOUNCEMENT
+  ACTION_ASSIGNED
 }

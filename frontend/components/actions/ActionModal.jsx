@@ -17,6 +17,7 @@ export function ActionModal({
     description: '',
     status: 'TODO',
     priority: 'MEDIUM',
+    progress: 0,
     dueDate: '',
     assigneeId: null,
   })
@@ -28,6 +29,7 @@ export function ActionModal({
         description: action.description || '',
         status: action.status,
         priority: action.priority,
+        progress: action.progress || 0,
         dueDate: action.dueDate ? action.dueDate.split('T')[0] : '',
         assigneeId: action.assigneeId,
       })
@@ -37,6 +39,7 @@ export function ActionModal({
         description: '',
         status: 'TODO',
         priority: 'MEDIUM',
+        progress: 0,
         dueDate: '',
         assigneeId: null,
       })
@@ -102,6 +105,20 @@ export function ActionModal({
               <option value="URGENT">Urgent</option>
             </select>
           </div>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-text-primary block mb-2">
+            Progress: {formData.progress}%
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={formData.progress}
+            onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) })}
+            className="w-full"
+          />
         </div>
 
         <Input

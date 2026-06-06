@@ -8,9 +8,10 @@ import { useUIStore } from '@/store/uiStore'
 import { useNotificationStore } from '@/store/notificationStore'
 import { useSocket } from '@/hooks/useSocket'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Home, Target, ListChecks, Megaphone, BarChart3, Users, Settings, Sun, Moon } from 'lucide-react'
+import { Menu, X, Home, Target, ListChecks, Megaphone, BarChart3, Activity, CalendarDays, Users, Settings, Sun, Moon } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
+import { GlobalSearch } from '@/components/search/GlobalSearch'
 import Link from 'next/link'
 
 export function DashboardClient({ children }) {
@@ -28,6 +29,8 @@ export function DashboardClient({ children }) {
     { icon: ListChecks, label: 'Actions', href: 'actions' },
     { icon: Megaphone, label: 'Announcements', href: 'announcements' },
     { icon: BarChart3, label: 'Analytics', href: 'analytics' },
+    { icon: Activity, label: 'Activity', href: 'activity' },
+    { icon: CalendarDays, label: 'Calendar', href: 'calendar' },
     { icon: Users, label: 'Members', href: 'members' },
     { icon: Settings, label: 'Settings', href: 'settings' },
   ]
@@ -60,6 +63,7 @@ export function DashboardClient({ children }) {
         email: 'demo@example.com',
         name: 'Demo User',
         avatarUrl: null,
+        role: 'ADMIN',
       })
     }
   }, [user, setUser, mounted])
@@ -97,7 +101,7 @@ export function DashboardClient({ children }) {
             transition={{ duration: 0.15, ease: 'easeOut' }}
             className="w-60 bg-surface border-r border-border flex flex-col flex-shrink-0"
           >
-            <div className="p-6 border-b border-border">
+            <div className="h-16 px-6 border-b border-border flex items-center">
               <h1 className="text-xl font-bold bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent">
                 Team Hub
               </h1>
@@ -172,7 +176,11 @@ export function DashboardClient({ children }) {
 
           <div className="flex-1" />
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div className="w-64">
+              <GlobalSearch workspaceId={activeWorkspace?.id} />
+            </div>
+
             <NotificationBell
               notifications={notifications}
               unreadCount={unreadCount}

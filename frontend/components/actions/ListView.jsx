@@ -16,6 +16,8 @@ export function ListView({
   actions,
   onEdit,
   onDelete,
+  onCommentClick,
+  onProgressChange,
 }) {
   const [expandedStatus, setExpandedStatus] = useState(null)
 
@@ -67,6 +69,8 @@ export function ListView({
                           action={action}
                           onEdit={onEdit}
                           onDelete={onDelete}
+                          onCommentClick={onCommentClick}
+                          onProgressChange={onProgressChange}
                         />
                       </div>
                     ))

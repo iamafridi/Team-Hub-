@@ -15,6 +15,8 @@ export function KanbanBoard({
   onEdit,
   onDelete,
   onReorder,
+  onCommentClick,
+  onProgressChange,
 }) {
   const [draggedItem, setDraggedItem] = useState(null)
   const [overColumn, setOverColumn] = useState(null)
@@ -53,6 +55,8 @@ export function KanbanBoard({
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           isOver={overColumn === status.key}
+          onCommentClick={onCommentClick}
+          onProgressChange={onProgressChange}
         />
       ))}
     </div>

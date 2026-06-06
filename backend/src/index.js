@@ -23,6 +23,9 @@ const notificationRoutes = require('./routes/notifications')
 const analyticsRoutes = require('./routes/analytics')
 const auditRoutes = require('./routes/audit')
 const uploadRoutes = require('./routes/upload')
+const commentRoutes = require('./routes/comments')
+const searchRoutes = require('./routes/search')
+const activityRoutes = require('./routes/activity')
 
 const app = express()
 const server = http.createServer(app)
@@ -96,6 +99,9 @@ app.use('/notifications', authMiddleware, notificationRoutes)
 app.use('/workspaces', authMiddleware, analyticsRoutes)
 app.use('/workspaces', authMiddleware, auditRoutes)
 app.use('/upload', authMiddleware, uploadRoutes)
+app.use('/workspaces', authMiddleware, commentRoutes)
+app.use('/workspaces', authMiddleware, searchRoutes)
+app.use('/workspaces', authMiddleware, activityRoutes)
 
 io.use(async (socket, next) => {
   try {

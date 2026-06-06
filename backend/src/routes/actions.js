@@ -3,6 +3,7 @@ const { z } = require('zod')
 const prisma = require('../prisma/client')
 const { logAction } = require('../utils/auditLog')
 const { emitToWorkspace } = require('../socket/emitter')
+const { sendAssignmentEmail } = require('../services/emailService')
 
 const router = express.Router()
 
@@ -20,6 +21,7 @@ const updateActionSchema = z.object({
   description: z.string().optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
   status: z.enum(['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE']).optional(),
+  progress: z.number().int().min(0).max(100).optional(),
   assigneeId: z.string().optional(),
   dueDate: z.string().datetime().optional(),
 })
@@ -61,10 +63,36 @@ router.post('/:workspaceId/actions', async (req, res) => {
         workspaceId: req.params.workspaceId,
       },
       include: {
-        assignee: { select: { id: true, name: true, avatarUrl: true } },
+        assignee: { select: { id: true, name: true, email: true, avatarUrl: true } },
         goal: { select: { id: true, title: true } },
       },
     })
+
+    if (assigneeId) {
+      const assigner = await prisma.user.findUnique({ where: { id: req.userId } })
+      const workspace = await prisma.workspace.findUnique({ where: { id: req.params.workspaceId } })
+
+      await prisma.notification.create({
+        data: {
+          userId: assigneeId,
+          type: 'ACTION_ASSIGNED',
+          message: `${assigner?.name || 'Team member'} assigned you to "${action.title}"`,
+          link: `/workspace/${req.params.workspaceId}/actions`,
+        },
+      })
+
+      if (action.assignee?.email) {
+        const actionLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/workspace/${req.params.workspaceId}/actions`
+        await sendAssignmentEmail(
+          action.assignee.email,
+          assigner?.name || 'Team member',
+          action.title,
+          workspace?.name || 'Workspace',
+          actionLink
+        )
+      }
+    }
+
     logAction(req.userId, req.params.workspaceId, 'CREATE', 'ActionItem', action.id)
     emitToWorkspace(req.params.workspaceId, 'action:created', { action })
     res.status(201).json({ data: action, message: 'Action created' })
@@ -79,7 +107,13 @@ router.post('/:workspaceId/actions', async (req, res) => {
 
 router.patch('/:workspaceId/actions/:actionId', async (req, res) => {
   try {
-    const { title, description, priority, status, assigneeId, dueDate } = updateActionSchema.parse(req.body)
+    const { title, description, priority, status, progress, assigneeId, dueDate } = updateActionSchema.parse(req.body)
+
+    const existingAction = await prisma.actionItem.findUnique({
+      where: { id: req.params.actionId },
+      include: { assignee: true },
+    })
+
     const action = await prisma.actionItem.update({
       where: { id: req.params.actionId },
       data: {
@@ -87,14 +121,47 @@ router.patch('/:workspaceId/actions/:actionId', async (req, res) => {
         ...(description !== undefined && { description }),
         ...(priority && { priority }),
         ...(status && { status }),
+        ...(progress !== undefined && { progress }),
         ...(assigneeId !== undefined && { assigneeId }),
         ...(dueDate && { dueDate: new Date(dueDate) }),
       },
       include: {
-        assignee: { select: { id: true, name: true, avatarUrl: true } },
+        assignee: { select: { id: true, name: true, email: true, avatarUrl: true } },
         goal: { select: { id: true, title: true } },
       },
     })
+
+    if (assigneeId !== undefined && assigneeId !== existingAction.assigneeId && assigneeId) {
+      const assigner = await prisma.user.findUnique({ where: { id: req.userId } })
+      const workspace = await prisma.workspace.findUnique({ where: { id: req.params.workspaceId } })
+
+      await prisma.notification.create({
+        data: {
+          userId: assigneeId,
+          type: 'ACTION_ASSIGNED',
+          message: `${assigner?.name || 'Team member'} assigned you to "${action.title}"`,
+          link: `/workspace/${req.params.workspaceId}/actions`,
+        },
+      })
+
+      if (action.assignee?.email) {
+        const actionLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/workspace/${req.params.workspaceId}/actions`
+        await sendAssignmentEmail(
+          action.assignee.email,
+          assigner?.name || 'Team member',
+          action.title,
+          workspace?.name || 'Workspace',
+          actionLink
+        )
+      }
+
+      emitToWorkspace(req.params.workspaceId, 'action:assigned', {
+        actionId: action.id,
+        assigneeId: assigneeId,
+        actionTitle: action.title,
+      })
+    }
+
     logAction(req.userId, req.params.workspaceId, 'UPDATE', 'ActionItem', req.params.actionId)
     emitToWorkspace(req.params.workspaceId, 'action:updated', { action })
     res.json({ data: action, message: 'Action updated' })
