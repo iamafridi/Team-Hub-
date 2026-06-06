@@ -26,6 +26,11 @@ export default function MemberActions({
       } else {
         setPosition('right')
       }
+
+      // Position above if not enough space below
+      if (rect.bottom + 300 > window.innerHeight) {
+        setPosition(prev => prev + '-above')
+      }
     }
   }, [])
 
@@ -35,8 +40,10 @@ export default function MemberActions({
       initial={{ opacity: 0, scale: 0.95, y: -10 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: -10 }}
-      className={`absolute top-full mt-2 bg-surface border border-border rounded-lg shadow-2xl z-50 min-w-56 overflow-y-auto max-h-96 ${
-        position === 'left' ? 'right-0' : 'left-0'
+      className={`absolute bg-surface border border-border rounded-lg shadow-2xl z-50 min-w-56 overflow-y-auto max-h-96 ${
+        position.includes('above') ? 'bottom-full mb-2' : 'top-full mt-2'
+      } ${
+        position.includes('left') ? 'right-0' : 'left-0'
       }`}
       onClick={(e) => e.stopPropagation()}
     >
