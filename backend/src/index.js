@@ -41,6 +41,7 @@ if (Sentry) {
 }
 
 const app = express()
+app.set('trust proxy', 1)
 const server = http.createServer(app)
 
 if (process.env.SENTRY_DSN) {
