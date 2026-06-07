@@ -157,7 +157,8 @@ export default function InviteMemberModal({ workspaceId, onClose, onSuccess }) {
             </div>
           </div>
         ) : (
-          // Invite Form
+          <>
+          {/* Invite Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email Input */}
           <div>
@@ -265,6 +266,7 @@ export default function InviteMemberModal({ workspaceId, onClose, onSuccess }) {
             </div>
           </div>
         </div>
+          </>
         )}
       </motion.div>
     </motion.div>
