@@ -265,12 +265,12 @@ server.listen(PORT, async () => {
     console.log('✅ Database connected')
     initDigestJob()
     initRecurrenceJob()
-    console.log(`🚀 Server running on port ${PORT}`)
-    console.log(`📚 API docs: http://localhost:${PORT}/docs`)
   } catch (error) {
     console.error('❌ Failed to connect to database:', error)
-    process.exit(1)
+    console.warn('⚠️  Server will start without database. Health check will report 503 until DB is available.')
   }
+  console.log(`🚀 Server running on port ${PORT}`)
+  console.log(`📚 API docs: http://localhost:${PORT}/docs`)
 })
 
 process.on('SIGINT', async () => {
