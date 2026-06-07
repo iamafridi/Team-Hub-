@@ -265,6 +265,7 @@ export default function InviteMemberModal({ workspaceId, onClose, onSuccess }) {
             </div>
           </div>
         </div>
+        )}
       </motion.div>
     </motion.div>
   )

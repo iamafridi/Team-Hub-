@@ -2,14 +2,10 @@
 
 import { useEffect } from 'react'
 import { Button } from '@/components/ui'
-import * as Sentry from '@sentry/nextjs'
 
 export default function WorkspaceError({ error, reset }) {
   useEffect(() => {
     console.error(error)
-    if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
-      Sentry.captureException(error)
-    }
   }, [error])
 
   return (
