@@ -18,7 +18,7 @@ import Link from 'next/link'
 export function DashboardClient({ children }) {
   const router = useRouter()
   const pathname = usePathname()
-  const { user, setUser, loadUser } = useAuthStore()
+  const { user, setUser, loadUser, signOut } = useAuthStore()
   const { workspaces, activeWorkspace, setWorkspaces, setActiveWorkspace } = useWorkspaceStore()
   const { sidebarOpen, toggleSidebar, theme, toggleTheme, setTheme } = useUIStore()
   const { notifications, unreadCount, markRead, markAllRead } = useNotificationStore()
@@ -65,19 +65,9 @@ export function DashboardClient({ children }) {
   useEffect(() => {
     if (!mounted) return
     if (!user) {
-      const savedUser = loadUser()
-      if (!savedUser) {
-        const savedAvatar = typeof window !== 'undefined' ? localStorage.getItem('profileAvatar') : null
-        setUser({
-          id: 'demo-user',
-          email: 'demo@example.com',
-          name: 'Demo User',
-          avatarUrl: savedAvatar,
-          role: 'ADMIN',
-        })
-      }
+      loadUser()
     }
-  }, [user, setUser, loadUser, mounted])
+  }, [user, loadUser, mounted])
 
   useEffect(() => {
     if (!mounted) return
@@ -292,9 +282,9 @@ export function DashboardClient({ children }) {
                         </button>
                         <button
                           onClick={() => {
-                            setUser(null)
+                            if (signOut) signOut()
+                            else setUser(null)
                             setShowUserMenu(false)
-                            router.push('/login')
                           }}
                           className="w-full text-left px-3 py-2 text-xs uppercase font-medium text-red-600 hover:bg-red-50 rounded transition-colors"
                         >

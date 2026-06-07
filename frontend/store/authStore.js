@@ -5,11 +5,14 @@ import { create } from 'zustand'
 export const useAuthStore = create((set) => ({
   user: null,
   isAuthenticated: false,
+  token: null,
+  signOut: null,
 
   setUser: (user) => {
     if (typeof window !== 'undefined') {
       if (user) {
-        localStorage.setItem('user', JSON.stringify(user))
+        const { token, ...safeUser } = user
+        localStorage.setItem('user', JSON.stringify(safeUser))
       } else {
         localStorage.removeItem('user')
       }
@@ -17,8 +20,11 @@ export const useAuthStore = create((set) => ({
     set({
       user,
       isAuthenticated: !!user,
+      token: user?.token || null,
     })
   },
+
+  setSignOut: (fn) => set({ signOut: fn }),
 
   loadUser: () => {
     if (typeof window !== 'undefined') {
@@ -46,6 +52,7 @@ export const useAuthStore = create((set) => ({
     set({
       user: null,
       isAuthenticated: false,
+      token: null,
     })
   },
 
@@ -53,10 +60,12 @@ export const useAuthStore = create((set) => ({
     set((state) => {
       const updatedUser = state.user ? { ...state.user, ...updates } : null
       if (typeof window !== 'undefined' && updatedUser) {
-        localStorage.setItem('user', JSON.stringify(updatedUser))
+        const { token, ...safeUser } = updatedUser
+        localStorage.setItem('user', JSON.stringify(safeUser))
       }
       return {
         user: updatedUser,
+        token: updatedUser?.token || state.token,
       }
     }),
 }))

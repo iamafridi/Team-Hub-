@@ -10,8 +10,9 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const state = useAuthStore.getState()
-    if (state.user?.token) {
-      config.headers.Authorization = `Bearer ${state.user.token}`
+    const token = state.token
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
     }
     return config
   },
@@ -24,7 +25,7 @@ api.interceptors.response.use(
     const status = error.response?.status
 
     if (status === 401) {
-      window.location.href = '/login'
+      window.location.href = '/sign-in'
     } else if (status === 403) {
       toast.error("You don't have permission to do that")
     } else if (status >= 500) {

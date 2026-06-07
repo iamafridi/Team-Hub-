@@ -13,17 +13,15 @@ let socket = null
 
 export function useSocket() {
   const { activeWorkspace } = useWorkspaceStore()
-  const { user } = useAuthStore()
-  const { addNotification } = useNotificationStore()
+  const { user, token } = useAuthStore()
 
   useEffect(() => {
     if (!activeWorkspace?.id || !user?.id) return
 
-    // Connect to socket server
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:4000'
     socket = io(socketUrl, {
       auth: {
-        token: user.id, // In production, this would be a proper JWT token
+        token: token || user.id,
       },
       query: {
         workspaceId: activeWorkspace.id,
