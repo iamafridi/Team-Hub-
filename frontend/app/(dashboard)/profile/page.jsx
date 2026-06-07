@@ -14,6 +14,8 @@ export default function ProfilePage() {
   const { user, setUser } = useAuthStore()
   const [profilePhoto, setProfilePhoto] = useState(user?.avatarUrl || null)
   const [showPhotoModal, setShowPhotoModal] = useState(false)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editedName, setEditedName] = useState(user?.name || '')
 
   const handlePhotoSave = (base64) => {
     setProfilePhoto(base64)
@@ -31,6 +33,21 @@ export default function ProfilePage() {
       localStorage.removeItem('profileAvatar')
     }
     toast.success('Profile photo removed')
+  }
+
+  const handleSaveName = () => {
+    if (!editedName.trim()) {
+      toast.error('Name cannot be empty')
+      return
+    }
+    setUser({ ...user, name: editedName })
+    setIsEditingName(false)
+    toast.success('Profile name updated successfully')
+  }
+
+  const handleCancelNameEdit = () => {
+    setEditedName(user?.name || '')
+    setIsEditingName(false)
   }
 
   const handleSignOut = () => {
@@ -148,7 +165,7 @@ export default function ProfilePage() {
           <span className="italic">Account</span> details
         </h2>
         <p className="text-text-secondary text-sm">
-          These details are tied to your sign-in and currently can't be changed from here. Reach out to a workspace admin to update them.
+          Update your name below. Email and other details are tied to your sign-in.
         </p>
 
         <div className="space-y-6 border-t border-border pt-6">
@@ -161,9 +178,47 @@ export default function ProfilePage() {
               <p className="text-xs text-text-muted uppercase tracking-wider font-medium mb-1">
                 Full Name
               </p>
-              <p className="text-sm font-medium text-text-primary">
-                {user?.name || 'User'}
-              </p>
+              {isEditingName ? (
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    placeholder="Enter your name"
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-white text-text-primary placeholder-text-muted outline-none focus:border-accent transition-colors"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleSaveName}
+                      className="flex-1"
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCancelNameEdit}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-text-primary">
+                    {user?.name || 'User'}
+                  </p>
+                  <button
+                    onClick={() => setIsEditingName(true)}
+                    className="text-xs text-accent hover:opacity-70 transition-opacity font-medium uppercase"
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
