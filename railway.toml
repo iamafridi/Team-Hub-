@@ -13,6 +13,6 @@ healthcheckTimeout = 30
 name = "web"
 root = "."
 [services.build]
-cmd = "npm install && npm run build -w @team-hub/web"
+cmd = "npm run build -w @team-hub/web"
 [services.deploy]
 startCommand = "npm run start -w @team-hub/web"
