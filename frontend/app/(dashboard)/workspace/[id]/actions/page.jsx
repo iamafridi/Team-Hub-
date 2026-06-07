@@ -26,6 +26,7 @@ export default function ActionsPage() {
   const [viewMode, setViewMode] = useState('kanban')
   const [editingAction, setEditingAction] = useState(null)
   const [commentTarget, setCommentTarget] = useState(null)
+  const [selectedActions, setSelectedActions] = useState([])
 
   useEffect(() => {
     const fetchActions = async () => {
@@ -129,8 +130,90 @@ export default function ActionsPage() {
     }
   }
 
+  const handleBulkOperation = async (operation, payload = {}) => {
+    if (selectedActions.length === 0) return
+
+    try {
+      await api.post(`/workspaces/${workspaceId}/actions/bulk`, {
+        ids: selectedActions,
+        operation,
+        payload,
+      })
+
+      if (operation === 'delete') {
+        selectedActions.forEach(id => removeAction(id))
+      } else if (operation === 'update') {
+        selectedActions.forEach(id => {
+          const action = actions.find(a => a.id === id)
+          if (action) {
+            updateAction(id, { ...action, ...payload })
+          }
+        })
+      }
+
+      setSelectedActions([])
+      toast.success(`${selectedActions.length} actions ${operation}d`)
+    } catch (error) {
+      toast.error(`Failed to ${operation} actions`)
+    }
+  }
+
+  const toggleSelectAction = (actionId) => {
+    setSelectedActions(prev =>
+      prev.includes(actionId)
+        ? prev.filter(id => id !== actionId)
+        : [...prev, actionId]
+    )
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedActions.length === actions.length) {
+      setSelectedActions([])
+    } else {
+      setSelectedActions(actions.map(a => a.id))
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {selectedActions.length > 0 && (
+        <div className="bg-accent/10 border border-accent rounded-lg p-4 flex items-center justify-between">
+          <span className="text-sm font-medium text-text-primary">
+            {selectedActions.length} action{selectedActions.length !== 1 ? 's' : ''} selected
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleBulkOperation('update', { status: 'IN_PROGRESS' })}
+            >
+              Mark In Progress
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleBulkOperation('update', { status: 'DONE' })}
+            >
+              Mark Done
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleBulkOperation('delete')}
+            >
+              Delete
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setSelectedActions([])}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-4xl sm:text-5xl font-serif text-text-primary">
@@ -207,6 +290,9 @@ export default function ActionsPage() {
           onDelete={handleDeleteAction}
           onCommentClick={handleCommentClick}
           onProgressChange={handleProgressChange}
+          selectedActions={selectedActions}
+          onSelectAction={toggleSelectAction}
+          onSelectAll={toggleSelectAll}
         />
       )}
 

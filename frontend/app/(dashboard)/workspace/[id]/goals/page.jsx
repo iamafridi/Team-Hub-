@@ -24,7 +24,7 @@ export default function GoalsPage() {
   const { openModal, closeModal, activeModal } = useUIStore()
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('All')
-  const [formData, setFormData] = useState({ title: '', description: '', dueDate: '', progress: 0, assigneeId: null })
+  const [formData, setFormData] = useState({ title: '', description: '', dueDate: '', progress: 0, assigneeId: null, recurrenceRule: null })
   const [editingGoal, setEditingGoal] = useState(null)
   const [commentTarget, setCommentTarget] = useState(null)
 
@@ -58,6 +58,7 @@ export default function GoalsPage() {
       dueDate: goal.dueDate ? goal.dueDate.split('T')[0] : '',
       progress: goal.progress || 0,
       assigneeId: goal.assignee?.id || null,
+      recurrenceRule: goal.recurrenceRule || null,
     })
     openModal('create-goal')
   }
@@ -258,6 +259,19 @@ export default function GoalsPage() {
             value={formData.dueDate}
             onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
           />
+          <div>
+            <label className="text-xs text-text-muted mb-2 block font-semibold">Recurrence</label>
+            <select
+              value={formData.recurrenceRule || ''}
+              onChange={(e) => setFormData({ ...formData, recurrenceRule: e.target.value || null })}
+              className="w-full px-3 py-2 border border-border rounded-lg bg-white text-text-primary outline-none focus:border-accent transition-colors"
+            >
+              <option value="">No recurrence</option>
+              <option value="DAILY">Daily</option>
+              <option value="WEEKLY">Weekly</option>
+              <option value="MONTHLY">Monthly</option>
+            </select>
+          </div>
           <div>
             <label className="text-xs text-text-muted mb-2 block font-semibold">Assign to</label>
             <select

@@ -1,5 +1,11 @@
+const Sentry = require('@sentry/node')
+
 function errorHandler(err, req, res, next) {
   console.error('Error:', err)
+
+  if (process.env.SENTRY_DSN) {
+    Sentry.captureException(err)
+  }
 
   const statusCode = err.statusCode || 500
   const message = err.message || 'Internal server error'

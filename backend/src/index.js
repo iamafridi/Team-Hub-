@@ -1,4 +1,5 @@
 require('dotenv').config()
+const Sentry = require('@sentry/node')
 const express = require('express')
 const cors = require('cors')
 const helmet = require('helmet')
@@ -27,9 +28,24 @@ const commentRoutes = require('./routes/comments')
 const searchRoutes = require('./routes/search')
 const activityRoutes = require('./routes/activity')
 const trashRoutes = require('./routes/trash')
+const emailPreferencesRoutes = require('./routes/emailPreferences')
+const { initDigestJob } = require('./jobs/digestJob')
+const { initRecurrenceJob } = require('./jobs/recurrenceJob')
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  })
+}
 
 const app = express()
 const server = http.createServer(app)
+
+if (process.env.SENTRY_DSN) {
+  app.use(Sentry.Handlers.requestHandler())
+}
 
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000'
 
@@ -65,6 +81,12 @@ initEmitter(io)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
+})
+
+const writeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  skip: (req) => !['POST', 'PATCH', 'DELETE'].includes(req.method),
 })
 
 app.use(helmet())
@@ -110,18 +132,19 @@ app.get('/health', async (req, res) => {
 })
 
 app.use('/workspaces', authMiddleware, workspaceRoutes)
-app.use('/workspaces', authMiddleware, goalRoutes)
-app.use('/goals', authMiddleware, milestoneRoutes)
-app.use('/workspaces', authMiddleware, actionRoutes)
-app.use('/workspaces', authMiddleware, announcementRoutes)
+app.use('/workspaces', authMiddleware, writeLimiter, goalRoutes)
+app.use('/goals', authMiddleware, writeLimiter, milestoneRoutes)
+app.use('/workspaces', authMiddleware, writeLimiter, actionRoutes)
+app.use('/workspaces', authMiddleware, writeLimiter, announcementRoutes)
 app.use('/notifications', authMiddleware, notificationRoutes)
 app.use('/workspaces', authMiddleware, analyticsRoutes)
 app.use('/workspaces', authMiddleware, auditRoutes)
-app.use('/upload', authMiddleware, uploadRoutes)
-app.use('/workspaces', authMiddleware, commentRoutes)
+app.use('/upload', authMiddleware, writeLimiter, uploadRoutes)
+app.use('/workspaces', authMiddleware, writeLimiter, commentRoutes)
 app.use('/workspaces', authMiddleware, searchRoutes)
 app.use('/workspaces', authMiddleware, activityRoutes)
-app.use('/workspaces', authMiddleware, trashRoutes)
+app.use('/workspaces', authMiddleware, writeLimiter, trashRoutes)
+app.use('/email', emailPreferencesRoutes)
 
 io.use(async (socket, next) => {
   try {
@@ -230,12 +253,18 @@ io.on('connection', async (socket) => {
 
 app.use(errorHandler)
 
+if (process.env.SENTRY_DSN) {
+  app.use(Sentry.Handlers.errorHandler())
+}
+
 const PORT = process.env.PORT || 4000
 
 server.listen(PORT, async () => {
   try {
     await prisma.$connect()
     console.log('✅ Database connected')
+    initDigestJob()
+    initRecurrenceJob()
     console.log(`🚀 Server running on port ${PORT}`)
     console.log(`📚 API docs: http://localhost:${PORT}/docs`)
   } catch (error) {

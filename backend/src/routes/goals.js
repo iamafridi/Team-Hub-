@@ -4,6 +4,7 @@ const prisma = require('../prisma/client')
 const { requireRole } = require('../middleware/rbac')
 const { logAction } = require('../utils/auditLog')
 const { emitToWorkspace } = require('../socket/emitter')
+const { sendSlackMessage, createGoalUpdateBlock } = require('../services/slackService')
 
 const router = express.Router()
 
@@ -155,6 +156,20 @@ router.patch('/:workspaceId/goals/:goalId', requireRole('ADMIN', 'MODERATOR', 'M
         actionItems: { select: { id: true, title: true, status: true, priority: true, assigneeId: true } },
       },
     })
+
+    // Send Slack notification if status changed
+    if (status && status !== goal.status) {
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: req.params.workspaceId },
+        select: { name: true, slackWebhookUrl: true },
+      })
+
+      if (workspace?.slackWebhookUrl) {
+        const block = createGoalUpdateBlock(updated, workspace.name, status)
+        await sendSlackMessage(workspace.slackWebhookUrl, block)
+      }
+    }
+
     logAction(req.userId, req.params.workspaceId, 'UPDATE', 'Goal', req.params.goalId)
     emitToWorkspace(req.params.workspaceId, 'goal:updated', { goal: updated })
     res.json({ data: updated, message: 'Goal updated' })

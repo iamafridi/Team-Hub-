@@ -20,7 +20,7 @@ export default function SettingsPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [userForm, setUserForm] = useState({ name: '', email: '' })
-  const [workspaceForm, setWorkspaceForm] = useState({ name: '', description: '', visibility: 'private' })
+  const [workspaceForm, setWorkspaceForm] = useState({ name: '', description: '', visibility: 'private', slackWebhookUrl: '' })
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
     goalUpdates: true,
@@ -51,6 +51,7 @@ export default function SettingsPage() {
         name: activeWorkspace.name || '',
         description: activeWorkspace.description || '',
         visibility: 'private',
+        slackWebhookUrl: activeWorkspace.slackWebhookUrl || '',
       })
     }
   }, [user, activeWorkspace])
@@ -331,6 +332,17 @@ export default function SettingsPage() {
             </select>
           </div>
 
+          <div>
+            <label className="text-xs text-text-muted mb-1 block font-semibold">Slack Webhook URL</label>
+            <Input
+              type="url"
+              value={workspaceForm.slackWebhookUrl}
+              onChange={(e) => setWorkspaceForm({ ...workspaceForm, slackWebhookUrl: e.target.value })}
+              placeholder="https://hooks.slack.com/services/..."
+            />
+            <p className="text-xs text-text-muted mt-1">Optional: Slack notifications will be sent to this webhook</p>
+          </div>
+
           <Button variant="primary" onClick={handleUpdateWorkspace} disabled={isUpdating} className="w-full">
             {isUpdating ? 'Saving...' : 'Save Workspace Settings'}
           </Button>
@@ -416,6 +428,34 @@ export default function SettingsPage() {
               <option>French</option>
               <option>German</option>
             </select>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Security Settings */}
+      <motion.div variants={itemVariants} className="bg-surface border border-border rounded-xl p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 rounded-lg bg-accent/10">
+            <Lock className="w-5 h-5 text-accent" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-text-primary">Security</h2>
+            <p className="text-xs text-text-muted mt-1">Manage your account security</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="p-4 bg-surface-2 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-text-primary">Two-Factor Authentication</h3>
+              <Badge variant="secondary">Available via Clerk</Badge>
+            </div>
+            <p className="text-sm text-text-muted mb-4">
+              Add an extra layer of security to your account with two-factor authentication. You can set this up through your Clerk account settings.
+            </p>
+            <Button variant="secondary" size="sm" disabled>
+              Manage 2FA (Configure via Clerk Dashboard)
+            </Button>
           </div>
         </div>
       </motion.div>

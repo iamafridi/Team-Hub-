@@ -5,6 +5,7 @@ const { requireRole } = require('../middleware/rbac')
 const { logAction } = require('../utils/auditLog')
 const { emitToWorkspace, emitToUser } = require('../socket/emitter')
 const { sendMentionEmail } = require('../services/emailService')
+const { sendSlackMessage, createAnnouncementBlock } = require('../services/slackService')
 
 const router = express.Router()
 
@@ -66,6 +67,18 @@ router.post('/:workspaceId/announcements', requireRole('ADMIN', 'MODERATOR'), as
         _count: { select: { comments: true } },
       },
     })
+
+    // Send Slack notification
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: req.params.workspaceId },
+      select: { name: true, slackWebhookUrl: true },
+    })
+
+    if (workspace?.slackWebhookUrl) {
+      const block = createAnnouncementBlock(announcement, workspace.name)
+      await sendSlackMessage(workspace.slackWebhookUrl, block)
+    }
+
     logAction(req.userId, req.params.workspaceId, 'CREATE', 'Announcement', announcement.id)
     emitToWorkspace(req.params.workspaceId, 'announcement:new', { announcement })
     res.status(201).json({ data: announcement, message: 'Announcement created' })

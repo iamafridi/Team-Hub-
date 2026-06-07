@@ -42,6 +42,7 @@ const updateWorkspaceSchema = z.object({
   name: z.string().min(1).optional(),
   description: z.string().optional(),
   accentColor: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
+  slackWebhookUrl: z.string().url().optional(),
 })
 
 const inviteSchema = z.object({
@@ -118,13 +119,14 @@ router.get('/:id', async (req, res) => {
 
 router.patch('/:id', requireRole('ADMIN'), async (req, res) => {
   try {
-    const { name, description, accentColor } = updateWorkspaceSchema.parse(req.body)
+    const { name, description, accentColor, slackWebhookUrl } = updateWorkspaceSchema.parse(req.body)
     const workspace = await prisma.workspace.update({
       where: { id: req.params.id },
       data: {
         ...(name && { name }),
         ...(description !== undefined && { description }),
         ...(accentColor && { accentColor }),
+        ...(slackWebhookUrl !== undefined && { slackWebhookUrl }),
       },
     })
     logAction(req.userId, workspace.id, 'UPDATE', 'Workspace', workspace.id)

@@ -4,6 +4,7 @@ const prisma = require('../prisma/client')
 const { logAction } = require('../utils/auditLog')
 const { emitToWorkspace } = require('../socket/emitter')
 const { sendAssignmentEmail } = require('../services/emailService')
+const { sendSlackMessage, createActionAssignmentBlock } = require('../services/slackService')
 const { requireRole } = require('../middleware/rbac')
 
 const router = express.Router()
@@ -147,7 +148,7 @@ router.patch('/:workspaceId/actions/:actionId', requireRole('ADMIN', 'MODERATOR'
 
     if (assigneeId !== undefined && assigneeId !== existingAction.assigneeId && assigneeId) {
       const assigner = await prisma.user.findUnique({ where: { id: req.userId } })
-      const workspace = await prisma.workspace.findUnique({ where: { id: req.params.workspaceId } })
+      const workspace = await prisma.workspace.findUnique({ where: { id: req.params.workspaceId }, select: { name: true, slackWebhookUrl: true } })
 
       await prisma.notification.create({
         data: {
@@ -167,6 +168,11 @@ router.patch('/:workspaceId/actions/:actionId', requireRole('ADMIN', 'MODERATOR'
           workspace?.name || 'Workspace',
           actionLink
         )
+      }
+
+      if (workspace?.slackWebhookUrl && action.assignee?.name) {
+        const block = createActionAssignmentBlock(action, action.assignee.name, workspace.name)
+        await sendSlackMessage(workspace.slackWebhookUrl, block)
       }
 
       emitToWorkspace(req.params.workspaceId, 'action:assigned', {
@@ -250,6 +256,71 @@ router.post('/:workspaceId/actions/reorder', requireRole('ADMIN', 'MODERATOR', '
     logAction(req.userId, req.params.workspaceId, 'REORDER', 'ActionItem', 'batch')
     emitToWorkspace(req.params.workspaceId, 'action:moved', { actions: results })
     res.json({ data: results, message: 'Actions reordered' })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid input' })
+    }
+    console.error(error)
+    res.status(500).json({ error: 'Server error' })
+  }
+})
+
+router.post('/:workspaceId/actions/bulk', requireRole('ADMIN', 'MODERATOR'), async (req, res) => {
+  try {
+    const { ids, operation, payload } = z.object({
+      ids: z.array(z.string()).min(1),
+      operation: z.enum(['update', 'delete', 'restore']),
+      payload: z.record(z.any()).optional(),
+    }).parse(req.body)
+
+    const actions = await prisma.actionItem.findMany({
+      where: {
+        id: { in: ids },
+        workspaceId: req.params.workspaceId,
+      },
+      select: { id: true, workspaceId: true },
+    })
+
+    if (actions.length !== ids.length) {
+      return res.status(404).json({ error: 'Some actions not found' })
+    }
+
+    const results = await prisma.$transaction(async (tx) => {
+      if (operation === 'update') {
+        return await Promise.all(
+          ids.map(id =>
+            tx.actionItem.update({
+              where: { id },
+              data: payload || {},
+              include: { assignee: { select: { id: true, name: true, avatarUrl: true } } },
+            })
+          )
+        )
+      } else if (operation === 'delete') {
+        return await Promise.all(
+          ids.map(id =>
+            tx.actionItem.update({
+              where: { id },
+              data: { deletedAt: new Date() },
+            })
+          )
+        )
+      } else if (operation === 'restore') {
+        return await Promise.all(
+          ids.map(id =>
+            tx.actionItem.update({
+              where: { id },
+              data: { deletedAt: null },
+              include: { assignee: { select: { id: true, name: true, avatarUrl: true } } },
+            })
+          )
+        )
+      }
+    })
+
+    logAction(req.userId, req.params.workspaceId, operation.toUpperCase(), 'ActionItem', 'batch')
+    emitToWorkspace(req.params.workspaceId, 'action:bulk', { operation, count: ids.length })
+    res.json({ data: results, message: `${ids.length} actions ${operation}d` })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input' })

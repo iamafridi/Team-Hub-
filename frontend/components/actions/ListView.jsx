@@ -18,6 +18,9 @@ export function ListView({
   onDelete,
   onCommentClick,
   onProgressChange,
+  selectedActions = [],
+  onSelectAction,
+  onSelectAll,
 }) {
   const [expandedStatus, setExpandedStatus] = useState(null)
 
@@ -38,6 +41,21 @@ export function ListView({
               className="w-full flex items-center justify-between p-4 bg-surface hover:bg-surface-2 transition-colors"
             >
               <div className="flex items-center gap-3">
+                {onSelectAll && (
+                  <input
+                    type="checkbox"
+                    checked={statusActions.length > 0 && statusActions.every(a => selectedActions.includes(a.id))}
+                    onChange={() => {
+                      statusActions.forEach(a => {
+                        if (!selectedActions.includes(a.id)) {
+                          onSelectAction(a.id)
+                        }
+                      })
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 rounded border-border cursor-pointer"
+                  />
+                )}
                 <h3 className="font-semibold text-text-primary">
                   {status.label}
                 </h3>
@@ -64,14 +82,24 @@ export function ListView({
                 >
                   {statusActions.length > 0 ? (
                     statusActions.map((action) => (
-                      <div key={action.id} className="p-4 hover:bg-surface-2 transition-colors">
-                        <ActionCard
-                          action={action}
-                          onEdit={onEdit}
-                          onDelete={onDelete}
-                          onCommentClick={onCommentClick}
-                          onProgressChange={onProgressChange}
-                        />
+                      <div key={action.id} className="p-4 hover:bg-surface-2 transition-colors flex items-start gap-3">
+                        {onSelectAction && (
+                          <input
+                            type="checkbox"
+                            checked={selectedActions.includes(action.id)}
+                            onChange={() => onSelectAction(action.id)}
+                            className="w-4 h-4 rounded border-border cursor-pointer mt-1 flex-shrink-0"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <ActionCard
+                            action={action}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                            onCommentClick={onCommentClick}
+                            onProgressChange={onProgressChange}
+                          />
+                        </div>
                       </div>
                     ))
                   ) : (

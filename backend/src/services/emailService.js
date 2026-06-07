@@ -112,8 +112,56 @@ async function sendAssignmentEmail(to, assignedByName, actionTitle, workspaceNam
   }
 }
 
+async function sendDigestEmail(to, userName, notifications) {
+  if (!transporter) return
+
+  try {
+    const notificationItems = notifications.slice(0, 20).map(n => `
+      <li style="padding: 10px; background-color: #fff; border-left: 4px solid #6366F1; margin-bottom: 10px;">
+        <strong>${n.type}</strong>: ${n.message}
+        <div style="font-size: 12px; color: #999; margin-top: 4px;">
+          ${new Date(n.createdAt).toLocaleString()}
+        </div>
+      </li>
+    `).join('')
+
+    const unsubscribeLink = `${process.env.API_URL || 'http://localhost:4000'}/email/unsubscribe?token=${to}`
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject: `Your Team Hub Daily Digest — ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #6366F1; padding: 20px; color: white; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0;">Team Hub Daily Digest</h1>
+          </div>
+          <div style="padding: 30px; background-color: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 0 0 10px 10px;">
+            <h2>Hello ${userName},</h2>
+            <p>Here's your summary of activity from the last 24 hours:</p>
+            <ul style="list-style: none; padding: 0;">
+              ${notificationItems}
+            </ul>
+            ${notifications.length > 20 ? `<p style="color: #666; font-size: 12px;">... and ${notifications.length - 20} more notifications</p>` : ''}
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;" />
+            <p style="color: #666; font-size: 12px;">
+              <a href="${unsubscribeLink}" style="color: #6366F1; text-decoration: none;">Unsubscribe from all emails</a> |
+              Manage preferences in your account settings
+            </p>
+            <p style="color: #666; font-size: 12px;">Team Hub — Collaborative workspace for teams</p>
+          </div>
+        </div>
+      `,
+    })
+    console.log(`Digest email sent to ${to}`)
+  } catch (error) {
+    console.error('Error sending digest email:', error)
+  }
+}
+
 module.exports = {
   sendInviteEmail,
   sendMentionEmail,
   sendAssignmentEmail,
+  sendDigestEmail,
 }
