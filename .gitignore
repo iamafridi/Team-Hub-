@@ -45,6 +45,7 @@ prisma/dev.db-journal
 # Claude Code & Development
 .claude/
 .claude/**
+.github/
 
 # Documentation
 CHANGELOG.md
