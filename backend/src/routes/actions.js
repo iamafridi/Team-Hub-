@@ -4,6 +4,7 @@ const prisma = require('../prisma/client')
 const { logAction } = require('../utils/auditLog')
 const { emitToWorkspace } = require('../socket/emitter')
 const { sendAssignmentEmail } = require('../services/emailService')
+const { requireRole } = require('../middleware/rbac')
 
 const router = express.Router()
 
@@ -26,7 +27,7 @@ const updateActionSchema = z.object({
   dueDate: z.string().datetime().optional(),
 })
 
-router.get('/:workspaceId/actions', async (req, res) => {
+router.get('/:workspaceId/actions', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { status, assigneeId, goalId } = req.query
     const where = { workspaceId: req.params.workspaceId, deletedAt: null }
@@ -49,7 +50,7 @@ router.get('/:workspaceId/actions', async (req, res) => {
   }
 })
 
-router.post('/:workspaceId/actions', async (req, res) => {
+router.post('/:workspaceId/actions', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { title, description, priority, assigneeId, goalId, dueDate } = createActionSchema.parse(req.body)
     const action = await prisma.actionItem.create({
@@ -105,7 +106,7 @@ router.post('/:workspaceId/actions', async (req, res) => {
   }
 })
 
-router.patch('/:workspaceId/actions/:actionId', async (req, res) => {
+router.patch('/:workspaceId/actions/:actionId', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { title, description, priority, status, progress, assigneeId, dueDate } = updateActionSchema.parse(req.body)
 
@@ -174,7 +175,7 @@ router.patch('/:workspaceId/actions/:actionId', async (req, res) => {
   }
 })
 
-router.delete('/:workspaceId/actions/:actionId', async (req, res) => {
+router.delete('/:workspaceId/actions/:actionId', requireRole('ADMIN', 'MODERATOR'), async (req, res) => {
   try {
     await prisma.actionItem.update({
       where: { id: req.params.actionId },
@@ -189,7 +190,7 @@ router.delete('/:workspaceId/actions/:actionId', async (req, res) => {
   }
 })
 
-router.patch('/:workspaceId/actions/:actionId/restore', async (req, res) => {
+router.patch('/:workspaceId/actions/:actionId/restore', requireRole('ADMIN', 'MODERATOR'), async (req, res) => {
   try {
     const action = await prisma.actionItem.update({
       where: { id: req.params.actionId },
@@ -208,7 +209,7 @@ router.patch('/:workspaceId/actions/:actionId/restore', async (req, res) => {
   }
 })
 
-router.post('/:workspaceId/actions/reorder', async (req, res) => {
+router.post('/:workspaceId/actions/reorder', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { updates } = z.object({
       updates: z.array(z.object({

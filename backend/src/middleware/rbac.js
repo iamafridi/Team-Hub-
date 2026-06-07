@@ -20,8 +20,8 @@ function requireRole(...allowedRoles) {
       })
 
       if (!member) {
-        // In development, auto-add user as ADMIN if they're not a member
-        if (process.env.NODE_ENV !== 'production') {
+        // Auto-add user as ADMIN if they're not a member (only if explicitly enabled)
+        if (process.env.ALLOW_DEV_AUTH === 'true') {
           try {
             // First, check if user exists
             let user = await prisma.user.findUnique({

@@ -18,7 +18,7 @@ const updateAnnounceSchema = z.object({
   content: z.string().min(1).optional(),
 })
 
-router.get('/:workspaceId/announcements', async (req, res) => {
+router.get('/:workspaceId/announcements', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const announcements = await prisma.announcement.findMany({
       where: { workspaceId: req.params.workspaceId, deletedAt: null },
@@ -40,7 +40,7 @@ router.get('/:workspaceId/announcements', async (req, res) => {
   }
 })
 
-router.post('/:workspaceId/announcements', async (req, res) => {
+router.post('/:workspaceId/announcements', requireRole('ADMIN', 'MODERATOR'), async (req, res) => {
   try {
     const { title, content } = createAnnounceSchema.parse(req.body)
     const announcement = await prisma.announcement.create({
@@ -142,7 +142,7 @@ router.patch('/:workspaceId/announcements/:annId/pin', requireRole('ADMIN'), asy
   }
 })
 
-router.post('/:workspaceId/announcements/:annId/reactions', async (req, res) => {
+router.post('/:workspaceId/announcements/:annId/reactions', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { emoji } = z.object({ emoji: z.string().length(1) }).parse(req.body)
     const existing = await prisma.reaction.findUnique({
@@ -178,7 +178,7 @@ router.post('/:workspaceId/announcements/:annId/reactions', async (req, res) => 
   }
 })
 
-router.get('/:workspaceId/announcements/:annId/comments', async (req, res) => {
+router.get('/:workspaceId/announcements/:annId/comments', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const comments = await prisma.comment.findMany({
       where: { announcementId: req.params.annId },
@@ -192,7 +192,7 @@ router.get('/:workspaceId/announcements/:annId/comments', async (req, res) => {
   }
 })
 
-router.post('/:workspaceId/announcements/:annId/comments', async (req, res) => {
+router.post('/:workspaceId/announcements/:annId/comments', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { content } = z.object({ content: z.string().min(1) }).parse(req.body)
     const comment = await prisma.comment.create({

@@ -1,10 +1,11 @@
 const express = require('express')
 const { Parser } = require('json2csv')
 const prisma = require('../prisma/client')
+const { requireRole } = require('../middleware/rbac')
 
 const router = express.Router()
 
-router.get('/:workspaceId/analytics', async (req, res) => {
+router.get('/:workspaceId/analytics', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { workspaceId } = req.params
 
@@ -87,7 +88,7 @@ router.get('/:workspaceId/analytics', async (req, res) => {
   }
 })
 
-router.get('/:workspaceId/analytics/export', async (req, res) => {
+router.get('/:workspaceId/analytics/export', requireRole('ADMIN', 'MODERATOR'), async (req, res) => {
   try {
     const goals = await prisma.goal.findMany({
       where: { workspaceId: req.params.workspaceId },

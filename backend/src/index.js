@@ -32,8 +32,13 @@ const app = express()
 const server = http.createServer(app)
 
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000'
-const allowedOrigins = [
+
+const productionOrigins = [
   clientUrl,
+  'https://team-hub.up.railway.app',
+].filter(Boolean)
+
+const developmentOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
   'http://localhost:3006',
@@ -42,8 +47,11 @@ const allowedOrigins = [
   'http://127.0.0.1:3001',
   'http://127.0.0.1:3006',
   'http://127.0.0.1:3007',
-  'https://team-hub.up.railway.app',
 ]
+
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? productionOrigins
+  : [...productionOrigins, ...developmentOrigins]
 
 const io = new Server(server, {
   cors: {
@@ -92,6 +100,15 @@ app.get('/docs.json', (req, res) => {
   res.send(swaggerSpec)
 })
 
+app.get('/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  } catch (e) {
+    res.status(503).json({ status: 'error', message: 'Database unreachable' })
+  }
+})
+
 app.use('/workspaces', authMiddleware, workspaceRoutes)
 app.use('/workspaces', authMiddleware, goalRoutes)
 app.use('/goals', authMiddleware, milestoneRoutes)
@@ -136,6 +153,22 @@ io.on('connection', async (socket) => {
     const { workspaceId } = socket.handshake.query
 
     if (workspaceId) {
+      // Verify user is a workspace member before joining
+      const membership = await prisma.workspaceMember.findUnique({
+        where: {
+          userId_workspaceId: {
+            userId: socket.userId,
+            workspaceId,
+          },
+        },
+      })
+
+      if (!membership) {
+        socket.emit('error', { message: 'Not a workspace member' })
+        socket.disconnect(true)
+        return
+      }
+
       socket.join(`workspace:${workspaceId}`)
       socket.join(`user:${socket.userId}`)
 

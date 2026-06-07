@@ -22,7 +22,7 @@ const updateGoalSchema = z.object({
   dueDate: z.string().datetime().optional(),
 })
 
-router.get('/:workspaceId/goals', async (req, res) => {
+router.get('/:workspaceId/goals', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const goals = await prisma.goal.findMany({
       where: { workspaceId: req.params.workspaceId, deletedAt: null },
@@ -50,7 +50,7 @@ router.get('/:workspaceId/goals', async (req, res) => {
   }
 })
 
-router.post('/:workspaceId/goals', async (req, res) => {
+router.post('/:workspaceId/goals', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { title, description, dueDate, ownerId } = createGoalSchema.parse(req.body)
     const goal = await prisma.goal.create({
@@ -82,7 +82,7 @@ router.post('/:workspaceId/goals', async (req, res) => {
   }
 })
 
-router.get('/:workspaceId/goals/:goalId', async (req, res) => {
+router.get('/:workspaceId/goals/:goalId', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const goal = await prisma.goal.findUnique({
       where: { id: req.params.goalId },
@@ -113,7 +113,7 @@ router.get('/:workspaceId/goals/:goalId', async (req, res) => {
   }
 })
 
-router.patch('/:workspaceId/goals/:goalId', async (req, res) => {
+router.patch('/:workspaceId/goals/:goalId', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { title, description, status, progress, dueDate } = updateGoalSchema.parse(req.body)
     const goal = await prisma.goal.findUnique({ where: { id: req.params.goalId } })
@@ -188,7 +188,7 @@ router.patch('/:workspaceId/goals/:goalId/restore', requireRole('ADMIN'), async 
   }
 })
 
-router.post('/:workspaceId/goals/:goalId/updates', async (req, res) => {
+router.post('/:workspaceId/goals/:goalId/updates', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { content } = z.object({ content: z.string().min(1) }).parse(req.body)
     const update = await prisma.goalUpdate.create({

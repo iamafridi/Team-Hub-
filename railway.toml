@@ -3,12 +3,14 @@ builder = "nixpacks"
 
 [[services]]
 name = "api"
-root = "apps/api"
+root = "backend"
 [services.deploy]
 startCommand = "npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
 
 [[services]]
 name = "web"
-root = "apps/web"
+root = "frontend"
 [services.deploy]
 startCommand = "npm start"

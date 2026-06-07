@@ -6,8 +6,8 @@ async function authMiddleware(req, res, next) {
     const authHeader = req.headers.authorization
 
     if (!authHeader?.startsWith('Bearer ')) {
-      // In development/non-production, allow demo user for testing
-      const isDevelopment = process.env.NODE_ENV !== 'production'
+      // Allow demo user only if explicitly enabled via ALLOW_DEV_AUTH flag
+      const isDevelopment = process.env.ALLOW_DEV_AUTH === 'true'
 
       if (isDevelopment) {
         try {

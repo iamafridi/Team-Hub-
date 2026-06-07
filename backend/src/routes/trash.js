@@ -1,12 +1,13 @@
 const express = require('express')
 const prisma = require('../prisma/client')
+const { requireRole } = require('../middleware/rbac')
 const { logAction } = require('../utils/auditLog')
 const { emitToWorkspace } = require('../socket/emitter')
 
 const router = express.Router()
 
 // Get all soft-deleted items for a workspace
-router.get('/:workspaceId/trash', async (req, res) => {
+router.get('/:workspaceId/trash', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const workspaceId = req.params.workspaceId
 
@@ -75,7 +76,7 @@ router.get('/:workspaceId/trash', async (req, res) => {
 })
 
 // Permanently delete an item (hard delete)
-router.delete('/:workspaceId/trash/goals/:goalId', async (req, res) => {
+router.delete('/:workspaceId/trash/goals/:goalId', requireRole('ADMIN'), async (req, res) => {
   try {
     await prisma.goal.delete({ where: { id: req.params.goalId } })
     logAction(req.userId, req.params.workspaceId, 'PURGE', 'Goal', req.params.goalId)
@@ -87,7 +88,7 @@ router.delete('/:workspaceId/trash/goals/:goalId', async (req, res) => {
   }
 })
 
-router.delete('/:workspaceId/trash/actions/:actionId', async (req, res) => {
+router.delete('/:workspaceId/trash/actions/:actionId', requireRole('ADMIN'), async (req, res) => {
   try {
     await prisma.actionItem.delete({ where: { id: req.params.actionId } })
     logAction(req.userId, req.params.workspaceId, 'PURGE', 'ActionItem', req.params.actionId)
@@ -99,7 +100,7 @@ router.delete('/:workspaceId/trash/actions/:actionId', async (req, res) => {
   }
 })
 
-router.delete('/:workspaceId/trash/announcements/:annId', async (req, res) => {
+router.delete('/:workspaceId/trash/announcements/:annId', requireRole('ADMIN'), async (req, res) => {
   try {
     await prisma.announcement.delete({ where: { id: req.params.annId } })
     logAction(req.userId, req.params.workspaceId, 'PURGE', 'Announcement', req.params.annId)

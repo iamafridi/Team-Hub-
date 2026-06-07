@@ -1,9 +1,10 @@
 const express = require('express')
 const prisma = require('../prisma/client')
+const { requireRole } = require('../middleware/rbac')
 
 const router = express.Router({ mergeParams: true })
 
-router.get('/:workspaceId/activity', async (req, res) => {
+router.get('/:workspaceId/activity', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { workspaceId } = req.params
     const { cursor } = req.query

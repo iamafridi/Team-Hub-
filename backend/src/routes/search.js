@@ -1,6 +1,7 @@
 const express = require('express')
 const { z } = require('zod')
 const prisma = require('../prisma/client')
+const { requireRole } = require('../middleware/rbac')
 
 const router = express.Router({ mergeParams: true })
 
@@ -8,7 +9,7 @@ const searchSchema = z.object({
   q: z.string().min(2, 'Search query must be at least 2 characters'),
 })
 
-router.get('/:workspaceId/search', async (req, res) => {
+router.get('/:workspaceId/search', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { q } = searchSchema.parse(req.query)
     const { workspaceId } = req.params

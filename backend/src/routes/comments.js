@@ -1,6 +1,7 @@
 const express = require('express')
 const { z } = require('zod')
 const prisma = require('../prisma/client')
+const { requireRole } = require('../middleware/rbac')
 const { logAction } = require('../utils/auditLog')
 const { emitToWorkspace } = require('../socket/emitter')
 
@@ -10,7 +11,7 @@ const commentSchema = z.object({
   content: z.string().min(1, 'Comment cannot be empty'),
 })
 
-router.get('/actions/:actionId/comments', async (req, res) => {
+router.get('/actions/:actionId/comments', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { workspaceId, actionId } = req.params
 
@@ -30,7 +31,7 @@ router.get('/actions/:actionId/comments', async (req, res) => {
   }
 })
 
-router.post('/actions/:actionId/comments', async (req, res) => {
+router.post('/actions/:actionId/comments', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { workspaceId, actionId } = req.params
     const { content } = commentSchema.parse(req.body)
@@ -60,7 +61,7 @@ router.post('/actions/:actionId/comments', async (req, res) => {
   }
 })
 
-router.delete('/actions/:actionId/comments/:commentId', async (req, res) => {
+router.delete('/actions/:actionId/comments/:commentId', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { workspaceId, commentId } = req.params
 
@@ -84,7 +85,7 @@ router.delete('/actions/:actionId/comments/:commentId', async (req, res) => {
   }
 })
 
-router.get('/goals/:goalId/comments', async (req, res) => {
+router.get('/goals/:goalId/comments', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { workspaceId, goalId } = req.params
 
@@ -104,7 +105,7 @@ router.get('/goals/:goalId/comments', async (req, res) => {
   }
 })
 
-router.post('/goals/:goalId/comments', async (req, res) => {
+router.post('/goals/:goalId/comments', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { workspaceId, goalId } = req.params
     const { content } = commentSchema.parse(req.body)

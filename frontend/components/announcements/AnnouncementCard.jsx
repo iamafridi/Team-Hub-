@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import DOMPurify from 'isomorphic-dompurify'
 import { Card, Avatar, Badge } from '@/components/ui'
 import { MoreVertical, Trash2, Pin, MessageCircle, SmilePlus } from 'lucide-react'
 import { Dropdown, DropdownItem } from '@/components/ui'
@@ -95,7 +96,7 @@ export function AnnouncementCard({
         <div className="prose prose-sm dark:prose-invert max-w-none">
           <div
             className="text-text-primary prose-a:text-accent"
-            dangerouslySetInnerHTML={{ __html: announcement.content }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(announcement.content) }}
           />
         </div>
 
