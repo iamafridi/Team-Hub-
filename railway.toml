@@ -12,5 +12,7 @@ healthcheckTimeout = 30
 [[services]]
 name = "web"
 root = "frontend"
+[services.build]
+cmd = "npm run build"
 [services.deploy]
 startCommand = "npm start"
