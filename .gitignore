@@ -67,3 +67,6 @@ deployment.md
 # Development artifacts
 .vibe/
 vibe-coding/
+
+# Firebase service account
+backend/service-account.json

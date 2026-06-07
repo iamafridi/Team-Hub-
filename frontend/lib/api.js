@@ -25,7 +25,7 @@ api.interceptors.response.use(
     const status = error.response?.status
 
     if (status === 401) {
-      window.location.href = '/sign-in'
+      window.location.href = '/login'
     } else if (status === 403) {
       toast.error("You don't have permission to do that")
     } else if (status >= 500) {

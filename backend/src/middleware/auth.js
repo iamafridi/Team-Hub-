@@ -1,4 +1,4 @@
-const { createClerkClient } = require('@clerk/backend')
+const admin = require('../firebase/admin')
 const prisma = require('../prisma/client')
 
 async function authMiddleware(req, res, next) {
@@ -6,18 +6,13 @@ async function authMiddleware(req, res, next) {
     const authHeader = req.headers.authorization
 
     if (!authHeader?.startsWith('Bearer ')) {
-      // Allow demo user only if explicitly enabled via ALLOW_DEV_AUTH flag
-      const isDevelopment = process.env.ALLOW_DEV_AUTH === 'true'
-
-      if (isDevelopment) {
+      if (process.env.ALLOW_DEV_AUTH === 'true') {
         try {
-          // Try to find demo user - prefer demo@example.com (matches frontend)
           let demoUser = await prisma.user.findUnique({
             where: { email: 'demo@example.com' }
           })
 
           if (!demoUser) {
-            // Fallback to demo@teamhub.com
             demoUser = await prisma.user.findUnique({
               where: { email: 'demo@teamhub.com' }
             })
@@ -25,14 +20,13 @@ async function authMiddleware(req, res, next) {
 
           if (demoUser) {
             req.userId = demoUser.id
-            req.clerkId = demoUser.clerkId || 'demo-clerk-id'
+            req.firebaseUid = demoUser.clerkId || 'demo-uid'
             return next()
           }
 
-          // If no demo user exists, create one
           demoUser = await prisma.user.create({
             data: {
-              clerkId: 'demo-clerk-id',
+              clerkId: 'demo-uid',
               email: 'demo@example.com',
               name: 'Demo User',
               avatarUrl: null,
@@ -40,12 +34,11 @@ async function authMiddleware(req, res, next) {
           })
 
           req.userId = demoUser.id
-          req.clerkId = demoUser.clerkId
+          req.firebaseUid = demoUser.clerkId
           return next()
         } catch (devError) {
-          // In development, allow request even if auth fails
           req.userId = 'dev-user-error-fallback'
-          req.clerkId = 'dev-clerk-fallback'
+          req.firebaseUid = 'dev-fallback'
           return next()
         }
       }
@@ -53,25 +46,22 @@ async function authMiddleware(req, res, next) {
     }
 
     const token = authHeader.split(' ')[1]
-    const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
-    const payload = await clerk.verifyToken(token)
+    const decoded = await admin.auth().verifyIdToken(token)
 
-    // Find or create user in DB
-    let user = await prisma.user.findUnique({ where: { clerkId: payload.sub } })
+    let user = await prisma.user.findUnique({ where: { clerkId: decoded.uid } })
     if (!user) {
-      const clerkUser = await clerk.users.getUser(payload.sub)
       user = await prisma.user.create({
         data: {
-          clerkId: payload.sub,
-          email: clerkUser.emailAddresses[0]?.emailAddress || '',
-          name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'User',
-          avatarUrl: clerkUser.imageUrl || null,
+          clerkId: decoded.uid,
+          email: decoded.email || '',
+          name: decoded.name || decoded.email?.split('@')[0] || 'User',
+          avatarUrl: decoded.picture || null,
         }
       })
     }
 
     req.userId = user.id
-    req.clerkId = payload.sub
+    req.firebaseUid = decoded.uid
     next()
   } catch (error) {
     return res.status(401).json({ error: 'Unauthorized' })
