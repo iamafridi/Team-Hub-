@@ -247,7 +247,7 @@ export default function InviteMemberModal({ workspaceId, onClose, onSuccess }) {
             </div>
             <div className="flex gap-2">
               <span className="font-medium text-accent flex-shrink-0">5.</span>
-              <span>They're automatically added to the member list</span>
+              <span>They&apos;re automatically added to the member list</span>
             </div>
           </div>
 

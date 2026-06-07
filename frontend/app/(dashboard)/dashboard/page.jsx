@@ -106,7 +106,7 @@ export default function Dashboard() {
           Welcome back to dashboard <span className="italic">{user?.name || 'User'}</span> 👋
         </h1>
         <p className="text-text-secondary text-lg">
-          Here's what's happening in your workspace today
+          Here&apos;s what&apos;s happening in your workspace today
         </p>
       </motion.div>
 

@@ -265,7 +265,7 @@ export default function ProfilePage() {
           <span className="italic">Sign</span> out
         </h2>
         <p className="text-text-secondary text-sm">
-          You'll be returned to the sign-in page. We'll keep your data safe and waiting — nothing is dropped on the way out.
+          You&apos;ll be returned to the sign-in page. We&apos;ll keep your data safe and waiting — nothing is dropped on the way out.
         </p>
 
         <div className="flex items-center justify-between pt-6 border-t border-border">
