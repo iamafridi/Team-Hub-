@@ -3,11 +3,16 @@
 import { create } from 'zustand'
 
 export const useUIStore = create((set) => ({
-  theme: 'system',
+  theme: 'light',
   sidebarOpen: true,
   commandPaletteOpen: false,
   activeModal: null,
   modalData: null,
+
+  setTheme: (newTheme) =>
+    set({
+      theme: newTheme,
+    }),
 
   toggleTheme: () =>
     set((state) => ({

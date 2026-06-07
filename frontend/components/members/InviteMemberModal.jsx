@@ -17,6 +17,9 @@ export default function InviteMemberModal({ workspaceId, onClose, onSuccess }) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('MEMBER')
   const [loading, setLoading] = useState(false)
+  const [inviteSent, setInviteSent] = useState(false)
+  const [sentEmail, setSentEmail] = useState('')
+  const [joinLink, setJoinLink] = useState('')
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -27,20 +30,39 @@ export default function InviteMemberModal({ workspaceId, onClose, onSuccess }) {
 
     setLoading(true)
     try {
-      await api.post(`/workspaces/${workspaceId}/invite`, {
+      const response = await api.post(`/workspaces/${workspaceId}/invite`, {
         email: email.trim(),
         role,
       })
-      toast.success('Invitation sent! They will appear once they accept.')
-      setEmail('')
-      setRole('MEMBER')
-      onClose()
+
+      // Generate a join link that can be shared
+      const inviteLink = `${window.location.origin}/join?workspaceId=${workspaceId}&email=${encodeURIComponent(email.trim())}&token=${response.data.token || 'invite'}`
+
+      setSentEmail(email)
+      setJoinLink(inviteLink)
+      setInviteSent(true)
+      toast.success('Invitation sent successfully!')
+
+      // Call onSuccess if provided
+      if (onSuccess) {
+        onSuccess({ email: email.trim(), role })
+      }
     } catch (error) {
       const message = error.response?.data?.error || 'Failed to send invitation'
       toast.error(message)
     } finally {
       setLoading(false)
     }
+  }
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(joinLink)
+    toast.success('Link copied to clipboard!')
+  }
+
+  const copyEmail = () => {
+    navigator.clipboard.writeText(sentEmail)
+    toast.success('Email copied to clipboard!')
   }
 
   return (
@@ -60,7 +82,9 @@ export default function InviteMemberModal({ workspaceId, onClose, onSuccess }) {
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-text-primary">Invite Member</h2>
+          <h2 className="text-2xl font-bold text-text-primary">
+            {inviteSent ? 'Invitation Sent!' : 'Invite Member'}
+          </h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-surface-2 rounded-lg transition-colors"
@@ -69,7 +93,72 @@ export default function InviteMemberModal({ workspaceId, onClose, onSuccess }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {inviteSent ? (
+          // Success Screen
+          <div className="space-y-6">
+            <div className="p-4 bg-accent/10 rounded-lg">
+              <p className="text-sm text-accent font-medium">✓ Invitation email sent to:</p>
+              <p className="text-text-primary font-semibold mt-1">{sentEmail}</p>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-text-primary">Share this link with them:</h3>
+              <div className="p-3 bg-surface-2 rounded-lg border border-border flex items-center gap-2">
+                <input
+                  type="text"
+                  value={joinLink}
+                  readOnly
+                  className="flex-1 bg-transparent text-text-primary text-sm outline-none truncate"
+                />
+                <button
+                  onClick={copyToClipboard}
+                  className="px-3 py-1 text-xs bg-accent text-white rounded hover:opacity-90 transition-opacity font-medium whitespace-nowrap"
+                >
+                  Copy Link
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-border">
+              <h3 className="text-sm font-semibold text-text-primary mb-3">They can join by:</h3>
+              <div className="space-y-2 text-xs text-text-secondary">
+                <div className="flex gap-2">
+                  <span className="font-medium text-accent flex-shrink-0">•</span>
+                  <span>Clicking the link in their email</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-medium text-accent flex-shrink-0">•</span>
+                  <span>Using the share link above</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setInviteSent(false)
+                  setEmail('')
+                  setRole('MEMBER')
+                }}
+                className="flex-1"
+              >
+                Invite Another
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={onClose}
+                className="flex-1"
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        ) : (
+          // Invite Form
+          <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email Input */}
           <div>
             <label className="block text-sm font-medium text-text-primary mb-2">

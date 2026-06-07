@@ -24,7 +24,7 @@ export default function GoalsPage() {
   const { openModal, closeModal, activeModal } = useUIStore()
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('All')
-  const [formData, setFormData] = useState({ title: '', description: '', dueDate: '', progress: 0 })
+  const [formData, setFormData] = useState({ title: '', description: '', dueDate: '', progress: 0, assigneeId: null })
   const [editingGoal, setEditingGoal] = useState(null)
   const [commentTarget, setCommentTarget] = useState(null)
 
@@ -57,6 +57,7 @@ export default function GoalsPage() {
       description: goal.description || '',
       dueDate: goal.dueDate ? goal.dueDate.split('T')[0] : '',
       progress: goal.progress || 0,
+      assigneeId: goal.assignee?.id || null,
     })
     openModal('create-goal')
   }
@@ -105,7 +106,7 @@ export default function GoalsPage() {
     }
 
     closeModal()
-    setFormData({ title: '', description: '', dueDate: '', progress: 0 })
+    setFormData({ title: '', description: '', dueDate: '', progress: 0, assigneeId: null })
     setEditingGoal(null)
   }
 
@@ -257,6 +258,21 @@ export default function GoalsPage() {
             value={formData.dueDate}
             onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
           />
+          <div>
+            <label className="text-xs text-text-muted mb-2 block font-semibold">Assign to</label>
+            <select
+              value={formData.assigneeId || ''}
+              onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value || null })}
+              className="w-full px-3 py-2 border border-border rounded-lg bg-white text-text-primary outline-none focus:border-accent transition-colors"
+            >
+              <option value="">No one</option>
+              {members?.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.user?.name || member.name || 'Unknown'}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label className="text-xs text-text-muted mb-2 block font-semibold">Progress: {formData.progress}%</label>
             <input

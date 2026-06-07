@@ -20,7 +20,7 @@ export function DashboardClient({ children }) {
   const pathname = usePathname()
   const { user, setUser, loadUser } = useAuthStore()
   const { workspaces, activeWorkspace, setWorkspaces, setActiveWorkspace } = useWorkspaceStore()
-  const { sidebarOpen, toggleSidebar, theme, toggleTheme } = useUIStore()
+  const { sidebarOpen, toggleSidebar, theme, toggleTheme, setTheme } = useUIStore()
   const { notifications, unreadCount, markRead, markAllRead } = useNotificationStore()
   const [mounted, setMounted] = useState(false)
   const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false)
@@ -228,18 +228,9 @@ export function DashboardClient({ children }) {
                   ].map(({ label, value }) => (
                     <button
                       key={value}
-                      onClick={() => {
-                        if (value === 'system') {
-                          // Reset to system default
-                          if (theme !== 'light') toggleTheme()
-                        } else if (value === 'dark' && theme !== 'dark') {
-                          toggleTheme()
-                        } else if (value === 'light' && theme !== 'light') {
-                          toggleTheme()
-                        }
-                      }}
+                      onClick={() => setTheme(value === 'system' ? 'light' : value)}
                       className={`flex-1 px-2 py-1 text-xs uppercase font-semibold rounded transition-colors ${
-                        (value === 'system' && theme === 'light') || (value === theme)
+                        theme === (value === 'system' ? 'light' : value)
                           ? 'bg-text-primary text-white'
                           : 'bg-surface-2 text-text-primary hover:bg-border'
                       }`}

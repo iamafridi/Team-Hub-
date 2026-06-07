@@ -15,6 +15,7 @@ export default function AnalyticsPage() {
   const [editingItem, setEditingItem] = useState(null)
   const [editProgress, setEditProgress] = useState(0)
   const [editTitle, setEditTitle] = useState('')
+  const [items, setItems] = useState([...mockGoals, ...mockActions])
 
   const getTimePeriodLabel = (period) => {
     const labels = {
@@ -102,12 +103,22 @@ export default function AnalyticsPage() {
       icon: BarChart3,
       color: 'from-orange-500 to-orange-600',
       key: 'progress',
-      items: [...mockGoals, ...mockActions],
+      items: items,
     },
   ]
 
   const currentStat = stats.find((s) => s.key === selectedStat)
   const filteredItems = currentStat ? filterItemsByTimePeriod(currentStat.items, timePeriod) : []
+
+  const handleSaveItem = (itemId, newTitle, newProgress) => {
+    setItems(items.map(item =>
+      item.id === itemId
+        ? { ...item, title: newTitle, progress: newProgress }
+        : item
+    ))
+    toast.success('Changes saved')
+    setEditingItem(null)
+  }
 
   return (
     <motion.div
@@ -267,8 +278,7 @@ export default function AnalyticsPage() {
                                 <div className="flex gap-2">
                                   <button
                                     onClick={() => {
-                                      toast.success('Changes saved')
-                                      setEditingItem(null)
+                                      handleSaveItem(item.id, editTitle, editProgress)
                                     }}
                                     className="px-3 py-1 bg-accent text-white rounded-lg text-sm font-medium hover:opacity-90"
                                   >
