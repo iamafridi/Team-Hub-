@@ -31,7 +31,8 @@
     "swagger-ui-express": "^5.0.0",
     "express-rate-limit": "^6.7.0",
     "zod": "^3.22.0",
-    "json2csv": "^5.0.7"
+    "json2csv": "^5.0.7",
+    "node-cron": "^3.0.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",
