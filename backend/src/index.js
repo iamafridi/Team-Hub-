@@ -1,5 +1,5 @@
 require('dotenv').config()
-const Sentry = require('@sentry/node')
+const Sentry = process.env.SENTRY_DSN ? require('@sentry/node') : null
 const express = require('express')
 const cors = require('cors')
 const helmet = require('helmet')
@@ -32,7 +32,7 @@ const emailPreferencesRoutes = require('./routes/emailPreferences')
 const { initDigestJob } = require('./jobs/digestJob')
 const { initRecurrenceJob } = require('./jobs/recurrenceJob')
 
-if (process.env.SENTRY_DSN) {
+if (Sentry) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV || 'development',

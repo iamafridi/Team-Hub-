@@ -1,9 +1,9 @@
-const Sentry = require('@sentry/node')
+const Sentry = process.env.SENTRY_DSN ? require('@sentry/node') : null
 
-function errorHandler(err, req, res, next) {
+function errorHandler(err, req, res, _next) {
   console.error('Error:', err)
 
-  if (process.env.SENTRY_DSN) {
+  if (Sentry) {
     Sentry.captureException(err)
   }
 

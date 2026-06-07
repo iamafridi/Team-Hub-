@@ -13,7 +13,7 @@ const commentSchema = z.object({
 
 router.get('/actions/:actionId/comments', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
-    const { workspaceId, actionId } = req.params
+    const { actionId } = req.params
 
     const comments = await prisma.comment.findMany({
       where: { actionItemId: actionId },
@@ -87,7 +87,7 @@ router.delete('/actions/:actionId/comments/:commentId', requireRole('ADMIN', 'MO
 
 router.get('/goals/:goalId/comments', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
-    const { workspaceId, goalId } = req.params
+    const { goalId } = req.params
 
     const comments = await prisma.comment.findMany({
       where: { goalId: goalId },
