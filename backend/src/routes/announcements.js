@@ -20,6 +20,7 @@ const updateAnnounceSchema = z.object({
 
 router.get('/:workspaceId/announcements', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
+    const { cursor } = req.query
     const announcements = await prisma.announcement.findMany({
       where: { workspaceId: req.params.workspaceId, deletedAt: null },
       include: {
@@ -32,8 +33,16 @@ router.get('/:workspaceId/announcements', requireRole('ADMIN', 'MODERATOR', 'MEM
         _count: { select: { comments: true } },
       },
       orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
+      take: 50,
+      ...(cursor && {
+        cursor: { id: cursor },
+        skip: 1,
+      }),
     })
-    res.json({ data: announcements, message: 'Announcements fetched' })
+
+    const nextCursor = announcements.length >= 50 ? announcements[49].id : null
+
+    res.json({ data: announcements.slice(0, 50), nextCursor, message: 'Announcements fetched' })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Server error' })
@@ -195,36 +204,52 @@ router.get('/:workspaceId/announcements/:annId/comments', requireRole('ADMIN', '
 router.post('/:workspaceId/announcements/:annId/comments', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { content } = z.object({ content: z.string().min(1) }).parse(req.body)
-    const comment = await prisma.comment.create({
-      data: {
-        content,
-        authorId: req.userId,
-        announcementId: req.params.annId,
-      },
-      include: { author: { select: { id: true, name: true, avatarUrl: true } } },
-    })
 
     const mentionRegex = /@(\w+)/g
     const mentions = content.match(mentionRegex) || []
+    const mentionedUsers = []
+
     for (const mention of mentions) {
       const username = mention.slice(1)
       const user = await prisma.user.findFirst({
         where: { name: { contains: username, mode: 'insensitive' } },
       })
       if (user) {
-        await prisma.mention.create({
-          data: { userId: user.id, commentId: comment.id },
+        mentionedUsers.push(user)
+      }
+    }
+
+    const { comment, notifications } = await prisma.$transaction(async (tx) => {
+      const newComment = await tx.comment.create({
+        data: {
+          content,
+          authorId: req.userId,
+          announcementId: req.params.annId,
+        },
+        include: { author: { select: { id: true, name: true, avatarUrl: true, email: true } } },
+      })
+
+      const createdNotifications = []
+      for (const user of mentionedUsers) {
+        await tx.mention.create({
+          data: { userId: user.id, commentId: newComment.id },
         })
-        const notification = await prisma.notification.create({
+        const notification = await tx.notification.create({
           data: {
             type: 'MENTION',
-            message: `${comment.author.name} mentioned you`,
+            message: `${newComment.author.name} mentioned you`,
             userId: user.id,
           },
         })
-        emitToUser(user.id, 'notification:new', { notification })
-        await sendMentionEmail(user.email, comment.author.name, '', content.substring(0, 200), '#')
+        createdNotifications.push({ notification, user })
       }
+
+      return { comment: newComment, notifications: createdNotifications }
+    })
+
+    for (const { notification, user } of notifications) {
+      emitToUser(user.id, 'notification:new', { notification })
+      await sendMentionEmail(user.email, comment.author.name, '', content.substring(0, 200), '#')
     }
 
     logAction(req.userId, req.params.workspaceId, 'CREATE', 'Comment', comment.id)

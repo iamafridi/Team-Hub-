@@ -29,7 +29,7 @@ const updateActionSchema = z.object({
 
 router.get('/:workspaceId/actions', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
-    const { status, assigneeId, goalId } = req.query
+    const { status, assigneeId, goalId, cursor } = req.query
     const where = { workspaceId: req.params.workspaceId, deletedAt: null }
     if (status) where.status = status
     if (assigneeId) where.assigneeId = assigneeId
@@ -42,8 +42,16 @@ router.get('/:workspaceId/actions', requireRole('ADMIN', 'MODERATOR', 'MEMBER'),
         goal: { select: { id: true, title: true } },
       },
       orderBy: [{ status: 'asc' }, { position: 'asc' }],
+      take: 50,
+      ...(cursor && {
+        cursor: { id: cursor },
+        skip: 1,
+      }),
     })
-    res.json({ data: actions, message: 'Actions fetched' })
+
+    const nextCursor = actions.length >= 50 ? actions[49].id : null
+
+    res.json({ data: actions.slice(0, 50), nextCursor, message: 'Actions fetched' })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Server error' })
@@ -53,45 +61,50 @@ router.get('/:workspaceId/actions', requireRole('ADMIN', 'MODERATOR', 'MEMBER'),
 router.post('/:workspaceId/actions', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { title, description, priority, assigneeId, goalId, dueDate } = createActionSchema.parse(req.body)
-    const action = await prisma.actionItem.create({
-      data: {
-        title,
-        description,
-        priority: priority || 'MEDIUM',
-        assigneeId,
-        goalId,
-        dueDate: dueDate ? new Date(dueDate) : null,
-        workspaceId: req.params.workspaceId,
-      },
-      include: {
-        assignee: { select: { id: true, name: true, email: true, avatarUrl: true } },
-        goal: { select: { id: true, title: true } },
-      },
-    })
 
-    if (assigneeId) {
-      const assigner = await prisma.user.findUnique({ where: { id: req.userId } })
-      const workspace = await prisma.workspace.findUnique({ where: { id: req.params.workspaceId } })
+    const assigner = await prisma.user.findUnique({ where: { id: req.userId } })
+    const workspace = await prisma.workspace.findUnique({ where: { id: req.params.workspaceId } })
 
-      await prisma.notification.create({
+    const action = await prisma.$transaction(async (tx) => {
+      const newAction = await tx.actionItem.create({
         data: {
-          userId: assigneeId,
-          type: 'ACTION_ASSIGNED',
-          message: `${assigner?.name || 'Team member'} assigned you to "${action.title}"`,
-          link: `/workspace/${req.params.workspaceId}/actions`,
+          title,
+          description,
+          priority: priority || 'MEDIUM',
+          assigneeId,
+          goalId,
+          dueDate: dueDate ? new Date(dueDate) : null,
+          workspaceId: req.params.workspaceId,
+        },
+        include: {
+          assignee: { select: { id: true, name: true, email: true, avatarUrl: true } },
+          goal: { select: { id: true, title: true } },
         },
       })
 
-      if (action.assignee?.email) {
-        const actionLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/workspace/${req.params.workspaceId}/actions`
-        await sendAssignmentEmail(
-          action.assignee.email,
-          assigner?.name || 'Team member',
-          action.title,
-          workspace?.name || 'Workspace',
-          actionLink
-        )
+      if (assigneeId) {
+        await tx.notification.create({
+          data: {
+            userId: assigneeId,
+            type: 'ACTION_ASSIGNED',
+            message: `${assigner?.name || 'Team member'} assigned you to "${newAction.title}"`,
+            link: `/workspace/${req.params.workspaceId}/actions`,
+          },
+        })
       }
+
+      return newAction
+    })
+
+    if (assigneeId && action.assignee?.email) {
+      const actionLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/workspace/${req.params.workspaceId}/actions`
+      await sendAssignmentEmail(
+        action.assignee.email,
+        assigner?.name || 'Team member',
+        action.title,
+        workspace?.name || 'Workspace',
+        actionLink
+      )
     }
 
     logAction(req.userId, req.params.workspaceId, 'CREATE', 'ActionItem', action.id)

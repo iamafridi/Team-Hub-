@@ -24,6 +24,7 @@ const updateGoalSchema = z.object({
 
 router.get('/:workspaceId/goals', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
+    const { cursor } = req.query
     const goals = await prisma.goal.findMany({
       where: { workspaceId: req.params.workspaceId, deletedAt: null },
       include: {
@@ -32,7 +33,15 @@ router.get('/:workspaceId/goals', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), a
         actionItems: { select: { id: true, status: true } },
       },
       orderBy: { createdAt: 'desc' },
+      take: 50,
+      ...(cursor && {
+        cursor: { id: cursor },
+        skip: 1,
+      }),
     })
+
+    const nextCursor = goals.length >= 50 ? goals[49].id : null
+
     const enriched = goals.map(g => {
       const doneCount = g.actionItems.filter(a => a.status === 'DONE').length
       const totalCount = g.actionItems.length
@@ -43,7 +52,7 @@ router.get('/:workspaceId/goals', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), a
         progress: calculatedProgress,
       }
     })
-    res.json({ data: enriched, message: 'Goals fetched' })
+    res.json({ data: enriched, nextCursor, message: 'Goals fetched' })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Server error' })
