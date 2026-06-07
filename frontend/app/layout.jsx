@@ -1,4 +1,4 @@
-// Global layout with Sentry error tracking and authentication
+// Global layout with error tracking and authentication
 import { Fraunces, Inter_Tight } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import './globals.css'
