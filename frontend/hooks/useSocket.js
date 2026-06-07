@@ -14,6 +14,7 @@ let socket = null
 export function useSocket() {
   const { activeWorkspace } = useWorkspaceStore()
   const { user, token } = useAuthStore()
+  const { addNotification } = useNotificationStore()
 
   useEffect(() => {
     if (!activeWorkspace?.id || !user?.id) return
