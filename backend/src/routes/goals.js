@@ -2,6 +2,7 @@ const express = require('express')
 const { z } = require('zod')
 const prisma = require('../prisma/client')
 const { requireRole } = require('../middleware/rbac')
+const { getVisibilityFilter } = require('../middleware/visibility')
 const { logAction } = require('../utils/auditLog')
 const { emitToWorkspace } = require('../socket/emitter')
 const { sendSlackMessage, createGoalUpdateBlock } = require('../services/slackService')
@@ -26,8 +27,9 @@ const updateGoalSchema = z.object({
 router.get('/:workspaceId/goals', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { cursor } = req.query
+    const visFilter = getVisibilityFilter(req, 'ownerId')
     const goals = await prisma.goal.findMany({
-      where: { workspaceId: req.params.workspaceId, deletedAt: null },
+      where: { workspaceId: req.params.workspaceId, deletedAt: null, ...visFilter },
       include: {
         owner: { select: { id: true, name: true, avatarUrl: true } },
         _count: { select: { milestones: true, actionItems: true } },
@@ -94,8 +96,9 @@ router.post('/:workspaceId/goals', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), 
 
 router.get('/:workspaceId/goals/:goalId', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
-    const goal = await prisma.goal.findUnique({
-      where: { id: req.params.goalId },
+    const visFilter = getVisibilityFilter(req, 'ownerId')
+    const goal = await prisma.goal.findFirst({
+      where: { id: req.params.goalId, ...visFilter },
       include: {
         owner: { select: { id: true, name: true, avatarUrl: true } },
         milestones: true,

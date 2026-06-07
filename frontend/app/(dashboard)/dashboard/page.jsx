@@ -125,7 +125,7 @@ export default function Dashboard() {
               className="group cursor-pointer"
               onClick={() => setOpenModal(cardModalMap[stat.label])}
             >
-              <div className="bg-white border border-border rounded-xl p-6 hover:shadow-md transition-all">
+              <div className="bg-surface border border-border rounded-xl p-6 hover:shadow-md transition-all">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-sm font-medium text-text-muted uppercase tracking-wider">
                     {stat.label}

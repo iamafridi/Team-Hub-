@@ -6,6 +6,7 @@ const { emitToWorkspace } = require('../socket/emitter')
 const { sendAssignmentEmail } = require('../services/emailService')
 const { sendSlackMessage, createActionAssignmentBlock } = require('../services/slackService')
 const { requireRole } = require('../middleware/rbac')
+const { getVisibilityFilter } = require('../middleware/visibility')
 
 const router = express.Router()
 
@@ -31,7 +32,8 @@ const updateActionSchema = z.object({
 router.get('/:workspaceId/actions', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { status, assigneeId, goalId, cursor } = req.query
-    const where = { workspaceId: req.params.workspaceId, deletedAt: null }
+    const visFilter = getVisibilityFilter(req, 'assigneeId')
+    const where = { workspaceId: req.params.workspaceId, deletedAt: null, ...visFilter }
     if (status) where.status = status
     if (assigneeId) where.assigneeId = assigneeId
     if (goalId) where.goalId = goalId

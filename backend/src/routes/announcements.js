@@ -2,6 +2,7 @@ const express = require('express')
 const { z } = require('zod')
 const prisma = require('../prisma/client')
 const { requireRole } = require('../middleware/rbac')
+const { getVisibilityFilter } = require('../middleware/visibility')
 const { logAction } = require('../utils/auditLog')
 const { emitToWorkspace, emitToUser } = require('../socket/emitter')
 const { sendMentionEmail } = require('../services/emailService')
@@ -22,8 +23,9 @@ const updateAnnounceSchema = z.object({
 router.get('/:workspaceId/announcements', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { cursor } = req.query
+    const visFilter = getVisibilityFilter(req, 'authorId')
     const announcements = await prisma.announcement.findMany({
-      where: { workspaceId: req.params.workspaceId, deletedAt: null },
+      where: { workspaceId: req.params.workspaceId, deletedAt: null, ...visFilter },
       include: {
         author: { select: { id: true, name: true, avatarUrl: true } },
         comments: {

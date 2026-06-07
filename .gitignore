@@ -63,6 +63,8 @@ deployment.md
 *.md
 !README.md
 !readme.md
+!plan.md
+!changelog.md
 
 # Development artifacts
 .vibe/

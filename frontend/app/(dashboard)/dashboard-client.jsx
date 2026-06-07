@@ -235,10 +235,10 @@ export function DashboardClient({ children }) {
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="w-full flex items-center gap-3 px-3 py-2 bg-white border border-border rounded-lg hover:bg-surface-2 transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2 bg-surface border border-border rounded-lg hover:bg-surface-2 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-text-primary flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xs font-bold">
+                  <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold">
                       {user?.name?.charAt(0).toUpperCase() || 'U'}
                     </span>
                   </div>
@@ -260,7 +260,7 @@ export function DashboardClient({ children }) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute bottom-full left-0 right-0 mb-2 bg-white border border-border rounded-lg shadow-lg z-50"
+                      className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-lg shadow-lg z-50"
                     >
                       <div className="p-3 border-b border-border">
                         <p className="text-xs text-text-muted uppercase tracking-wider font-semibold">
