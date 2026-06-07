@@ -10,6 +10,7 @@
     "packages/*"
   ],
   "scripts": {
+    "start": "npm run -w @team-hub/api start",
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
