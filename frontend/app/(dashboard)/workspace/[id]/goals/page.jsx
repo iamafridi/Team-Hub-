@@ -165,8 +165,10 @@ export default function GoalsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Goals</h1>
-          <p className="text-sm sm:text-base text-text-secondary">Track team objectives and milestones</p>
+          <h1 className="text-4xl sm:text-5xl font-serif text-text-primary">
+            <span className="italic">Goals</span>
+          </h1>
+          <p className="text-sm sm:text-base text-text-secondary mt-2">Track team objectives and milestones</p>
         </div>
         <Button
           variant="primary"

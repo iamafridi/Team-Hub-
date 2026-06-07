@@ -196,8 +196,10 @@ export default function CalendarPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Calendar</h1>
-          <p className="text-sm sm:text-base text-text-secondary">Track deadlines and milestones</p>
+          <h1 className="text-4xl sm:text-5xl font-serif text-text-primary">
+            <span className="italic">Calendar</span>
+          </h1>
+          <p className="text-sm sm:text-base text-text-secondary mt-2">Track deadlines and milestones</p>
         </div>
       </div>
 

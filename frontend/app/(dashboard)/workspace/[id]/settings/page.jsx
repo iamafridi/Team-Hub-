@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import { useWorkspaceStore } from '@/store/workspaceStore'
 import { useUIStore } from '@/store/uiStore'
@@ -12,6 +12,7 @@ import api from '@/lib/api'
 import toast from 'react-hot-toast'
 
 export default function SettingsPage() {
+  const router = useRouter()
   const { id: workspaceId } = useParams()
   const { user, setUser } = useAuthStore()
   const { activeWorkspace, setActiveWorkspace, members } = useWorkspaceStore()
@@ -140,8 +141,8 @@ export default function SettingsPage() {
     >
       {/* Header */}
       <motion.div variants={itemVariants}>
-        <h1 className="text-2xl sm:text-4xl font-bold text-text-primary mb-2">
-          Settings
+        <h1 className="text-4xl sm:text-5xl font-serif text-text-primary mb-2">
+          <span className="italic">Settings</span>
         </h1>
         <p className="text-sm sm:text-lg text-text-secondary">
           Manage your profile, workspace, and preferences
@@ -177,7 +178,7 @@ export default function SettingsPage() {
                   </Badge>
                 </div>
               </div>
-              <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)} className="w-full sm:w-auto flex-shrink-0">
+              <Button variant="secondary" size="sm" onClick={() => router.push('/profile')} className="w-full sm:w-auto flex-shrink-0">
                 Edit Profile
               </Button>
             </div>

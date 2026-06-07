@@ -133,8 +133,10 @@ export default function ActionsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Actions</h1>
-          <p className="text-sm sm:text-base text-text-secondary">Organize and track tasks</p>
+          <h1 className="text-4xl sm:text-5xl font-serif text-text-primary">
+            <span className="italic">Action</span>
+          </h1>
+          <p className="text-sm sm:text-base text-text-secondary mt-2">Organize and track tasks</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 bg-surface rounded-lg p-1">

@@ -190,8 +190,8 @@ export default function MembersPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent mb-2">
-            Team Members
+          <h1 className="text-4xl sm:text-5xl font-serif text-text-primary mb-2">
+            <span className="italic">Members</span>
           </h1>
           <p className="text-sm sm:text-lg text-text-secondary">
             Manage workspace members, roles, and permissions

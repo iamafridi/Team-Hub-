@@ -102,8 +102,8 @@ export default function Dashboard() {
     >
       {/* Header */}
       <motion.div variants={itemVariants} className="pt-2">
-        <h1 className="text-4xl font-bold text-text-primary mb-2">
-          Welcome back, {user?.name || 'User'}! 👋
+        <h1 className="text-4xl font-serif text-text-primary mb-2">
+          Welcome back <span className="italic">{user?.name || 'User'}</span> 👋
         </h1>
         <p className="text-text-secondary text-lg">
           Here's what's happening in your workspace today

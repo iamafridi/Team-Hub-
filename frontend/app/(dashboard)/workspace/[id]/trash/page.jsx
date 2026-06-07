@@ -173,8 +173,10 @@ export default function TrashPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Trash</h1>
-        <p className="text-sm sm:text-base text-text-secondary">Items are permanently deleted after 7 days</p>
+        <h1 className="text-4xl sm:text-5xl font-serif text-text-primary">
+          <span className="italic">Deleted</span>
+        </h1>
+        <p className="text-sm sm:text-base text-text-secondary mt-2">Items are permanently deleted after 7 days</p>
       </div>
 
       {/* Goals */}

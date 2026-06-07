@@ -1,8 +1,9 @@
-import { Inter } from 'next/font/google'
+import { Fraunces, Inter_Tight } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces', style: ['normal', 'italic'] })
+const interTight = Inter_Tight({ subsets: ['latin'], variable: '--font-inter-tight' })
 
 export const metadata = {
   title: 'Team Hub',
@@ -27,7 +28,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body className={inter.className}>
+      <body className={`${fraunces.variable} ${interTight.variable}`}>
         {children}
         <Toaster position="bottom-right" />
       </body>

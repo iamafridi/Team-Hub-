@@ -12,7 +12,7 @@ export function Button({
   ...props
 }) {
   const variants = {
-    primary: 'bg-accent text-white hover:opacity-90',
+    primary: 'bg-gray-900 text-white hover:bg-black',
     secondary: 'bg-surface-2 text-text-primary hover:bg-border',
     ghost: 'text-text-primary hover:bg-surface-2',
     danger: 'bg-red-600 text-white hover:bg-red-700',

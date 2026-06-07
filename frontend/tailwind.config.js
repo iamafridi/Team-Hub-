@@ -15,7 +15,8 @@ module.exports = {
         accent: 'var(--accent)',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['var(--font-inter-tight)', 'sans-serif'],
+        serif: ['var(--font-fraunces)', 'Georgia', 'serif'],
       },
       borderRadius: {
         DEFAULT: '10px',

@@ -286,8 +286,10 @@ export default function AnnouncementsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Announcements</h1>
-          <p className="text-sm sm:text-base text-text-secondary">Share updates with your team</p>
+          <h1 className="text-4xl sm:text-5xl font-serif text-text-primary">
+            <span className="italic">Announcements</span>
+          </h1>
+          <p className="text-sm sm:text-base text-text-secondary mt-2">Share updates with your team</p>
         </div>
         <Button
           variant="primary"

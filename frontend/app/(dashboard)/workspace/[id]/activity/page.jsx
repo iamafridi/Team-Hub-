@@ -163,8 +163,10 @@ export default function ActivityPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Activity</h1>
-        <p className="text-sm sm:text-base text-text-secondary">
+        <h1 className="text-4xl sm:text-5xl font-serif text-text-primary">
+          <span className="italic">Activity</span>
+        </h1>
+        <p className="text-sm sm:text-base text-text-secondary mt-2">
           Recent changes across your workspace
         </p>
       </div>

@@ -118,8 +118,8 @@ export default function AnalyticsPage() {
     >
       {/* Header */}
       <motion.div variants={itemVariants}>
-        <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent mb-2">
-          Analytics
+        <h1 className="text-4xl sm:text-5xl font-serif text-text-primary mb-2">
+          <span className="italic">Analytics</span>
         </h1>
         <p className="text-sm sm:text-lg text-text-secondary">
           Track your workspace performance and progress
