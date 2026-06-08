@@ -444,20 +444,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="p-4 bg-surface-2 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-text-primary">Two-Factor Authentication</h3>
-              <Badge variant="secondary">Available via Clerk</Badge>
-            </div>
-            <p className="text-sm text-text-muted mb-4">
-              Add an extra layer of security to your account with two-factor authentication. You can set this up through your Clerk account settings.
-            </p>
-            <Button variant="secondary" size="sm" disabled>
-              Manage 2FA (Configure via Clerk Dashboard)
-            </Button>
-          </div>
-        </div>
       </motion.div>
 
       {/* Workspace Info */}

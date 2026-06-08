@@ -154,18 +154,15 @@ io.use(async (socket, next) => {
       return next(new Error('Unauthorized'))
     }
 
-    const { createClerkClient } = require('@clerk/backend')
-    const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
-    const payload = await clerk.verifyToken(token)
+    const admin = require('./firebase/admin')
+    const decoded = await admin.auth().verifyIdToken(token)
 
-    // Find user in DB
-    const user = await prisma.user.findUnique({ where: { clerkId: payload.sub } })
+    const user = await prisma.user.findUnique({ where: { clerkId: decoded.uid } })
     if (!user) {
       return next(new Error('User not found'))
     }
 
     socket.userId = user.id
-    socket.clerkId = payload.sub
     next()
   } catch (error) {
     next(new Error('Unauthorized'))
