@@ -1,6 +1,3 @@
 {
-  "rootDirectory": "frontend",
-  "buildCommand": "next build",
-  "outputDirectory": ".next",
-  "framework": "nextjs"
+  "rootDirectory": "frontend"
 }
