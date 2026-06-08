@@ -71,3 +71,7 @@ vibe-coding/
 # Firebase service account
 backend/service-account.json
 .vercel
+
+# Windows local artifacts
+nul
+start-frontend.ps1
