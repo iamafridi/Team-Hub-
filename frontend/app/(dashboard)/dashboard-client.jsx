@@ -7,6 +7,7 @@ import { useWorkspaceStore } from '@/store/workspaceStore'
 import { useUIStore } from '@/store/uiStore'
 import { useNotificationStore } from '@/store/notificationStore'
 import { useSocket } from '@/hooks/useSocket'
+import api from '@/lib/api'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Home, Target, ListChecks, Megaphone, BarChart3, Activity, CalendarDays, Users, Settings, Sun, Moon, Trash2, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui'
@@ -72,15 +73,21 @@ export function DashboardClient({ children }) {
   useEffect(() => {
     if (!mounted) return
     if (!activeWorkspace) {
-      const mockWorkspace = {
-        id: 'demo-workspace-1',
-        name: 'Demo Workspace',
-        description: 'Development workspace',
-      }
-      setWorkspaces([mockWorkspace])
-      setActiveWorkspace(mockWorkspace)
+      fetchWorkspaces()
     }
   }, [activeWorkspace, setWorkspaces, setActiveWorkspace, mounted])
+
+  async function fetchWorkspaces() {
+    try {
+      const res = await api.get('/workspaces')
+      setWorkspaces(res.data.data)
+      if (res.data.data.length > 0) {
+        setActiveWorkspace(res.data.data[0])
+      }
+    } catch (error) {
+      console.error('Failed to fetch workspaces:', error)
+    }
+  }
 
   if (!mounted) {
     return (

@@ -7,8 +7,6 @@ import api from '@/lib/api'
 import { Button, EmptyState, SkeletonCard, Avatar } from '@/components/ui'
 import { Target, ListChecks, Megaphone, Flag, MessageSquare, Activity, ChevronDown, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { mockActivity } from '@/lib/mockData'
-
 const entityIcons = {
   Goal: Target,
   ActionItem: ListChecks,
@@ -144,9 +142,7 @@ export default function ActivityPage() {
       }
       setNextCursor(response.data.nextCursor)
     } catch (error) {
-      // Use mock data as fallback for development (silent)
-      setLogs(mockActivity)
-      setNextCursor(null)
+      console.error('Failed to fetch activity:', error)
     } finally {
       setLoading(false)
       setLoadingMore(false)

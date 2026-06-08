@@ -70,3 +70,4 @@ vibe-coding/
 
 # Firebase service account
 backend/service-account.json
+.vercel

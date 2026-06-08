@@ -13,8 +13,6 @@ import { CommentThread } from '@/components/announcements/CommentThread'
 import { useSocket } from '@/hooks/useSocket'
 import { Megaphone, Plus } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { mockAnnouncements } from '@/lib/mockData'
-
 export default function AnnouncementsPage() {
   const { id: workspaceId } = useParams()
   const { openModal, closeModal, activeModal, modalData } = useUIStore()
@@ -95,8 +93,7 @@ export default function AnnouncementsPage() {
         })
         setAnnouncements(sorted)
       } catch (error) {
-        // Use mock data as fallback for development (silent)
-        setAnnouncements(mockAnnouncements)
+        console.error('Failed to fetch announcements:', error)
       } finally {
         setLoading(false)
       }

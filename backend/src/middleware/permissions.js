@@ -1,6 +1,7 @@
+const { can } = require('@team-hub/shared')
 const prisma = require('../prisma/client')
 
-function requireRole(...allowedRoles) {
+function requirePermission(permission) {
   return async (req, res, next) => {
     try {
       const workspaceId = req.params.id || req.params.workspaceId
@@ -22,11 +23,12 @@ function requireRole(...allowedRoles) {
         return res.status(403).json({ error: 'Forbidden' })
       }
 
-      if (!allowedRoles.includes(member.role)) {
+      req.memberRole = member.role
+
+      if (!can(member.role, permission)) {
         return res.status(403).json({ error: 'Forbidden' })
       }
 
-      req.memberRole = member.role
       next()
     } catch (error) {
       return res.status(500).json({ error: 'Server error' })
@@ -34,4 +36,4 @@ function requireRole(...allowedRoles) {
   }
 }
 
-module.exports = { requireRole }
+module.exports = { requirePermission }

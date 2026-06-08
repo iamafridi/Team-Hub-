@@ -67,12 +67,19 @@ router.get('/:workspaceId/search', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), 
       }),
     ])
 
+    const members = searchResults[3].map(m => ({
+      ...m,
+      user: req.memberRole === 'ADMIN'
+        ? m.user
+        : { id: m.user.id, name: m.user.name, avatarUrl: m.user.avatarUrl },
+    }))
+
     res.json({
       data: {
         goals: searchResults[0],
         actions: searchResults[1],
         announcements: searchResults[2],
-        members: searchResults[3],
+        members,
       },
       message: 'Search results',
     })

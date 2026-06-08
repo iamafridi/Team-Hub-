@@ -6,6 +6,7 @@ const { emitToWorkspace } = require('../socket/emitter')
 const { sendAssignmentEmail } = require('../services/emailService')
 const { sendSlackMessage, createActionAssignmentBlock } = require('../services/slackService')
 const { requireRole } = require('../middleware/rbac')
+const { requirePermission } = require('../middleware/permissions')
 const { getVisibilityFilter } = require('../middleware/visibility')
 
 const router = express.Router()
@@ -17,6 +18,7 @@ const createActionSchema = z.object({
   assigneeId: z.string().optional(),
   goalId: z.string().optional(),
   dueDate: z.string().datetime().optional(),
+  recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
 })
 
 const updateActionSchema = z.object({
@@ -27,12 +29,13 @@ const updateActionSchema = z.object({
   progress: z.number().int().min(0).max(100).optional(),
   assigneeId: z.string().optional(),
   dueDate: z.string().datetime().optional(),
+  recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
 })
 
 router.get('/:workspaceId/actions', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { status, assigneeId, goalId, cursor } = req.query
-    const visFilter = getVisibilityFilter(req, 'assigneeId')
+    const visFilter = getVisibilityFilter(req, 'action')
     const where = { workspaceId: req.params.workspaceId, deletedAt: null, ...visFilter }
     if (status) where.status = status
     if (assigneeId) where.assigneeId = assigneeId
@@ -61,9 +64,9 @@ router.get('/:workspaceId/actions', requireRole('ADMIN', 'MODERATOR', 'MEMBER'),
   }
 })
 
-router.post('/:workspaceId/actions', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
+router.post('/:workspaceId/actions', requirePermission('CREATE_ACTION'), async (req, res) => {
   try {
-    const { title, description, priority, assigneeId, goalId, dueDate } = createActionSchema.parse(req.body)
+    const { title, description, priority, assigneeId, goalId, dueDate, recurrenceRule } = createActionSchema.parse(req.body)
 
     const assigner = await prisma.user.findUnique({ where: { id: req.userId } })
     const workspace = await prisma.workspace.findUnique({ where: { id: req.params.workspaceId } })
@@ -77,6 +80,7 @@ router.post('/:workspaceId/actions', requireRole('ADMIN', 'MODERATOR', 'MEMBER')
           assigneeId,
           goalId,
           dueDate: dueDate ? new Date(dueDate) : null,
+          recurrenceRule: recurrenceRule || null,
           workspaceId: req.params.workspaceId,
         },
         include: {
@@ -124,7 +128,7 @@ router.post('/:workspaceId/actions', requireRole('ADMIN', 'MODERATOR', 'MEMBER')
 
 router.patch('/:workspaceId/actions/:actionId', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
-    const { title, description, priority, status, progress, assigneeId, dueDate } = updateActionSchema.parse(req.body)
+    const { title, description, priority, status, progress, assigneeId, dueDate, recurrenceRule } = updateActionSchema.parse(req.body)
 
     const existingAction = await prisma.actionItem.findUnique({
       where: { id: req.params.actionId },
@@ -141,6 +145,7 @@ router.patch('/:workspaceId/actions/:actionId', requireRole('ADMIN', 'MODERATOR'
         ...(progress !== undefined && { progress }),
         ...(assigneeId !== undefined && { assigneeId }),
         ...(dueDate && { dueDate: new Date(dueDate) }),
+        ...(recurrenceRule !== undefined && { recurrenceRule }),
       },
       include: {
         assignee: { select: { id: true, name: true, email: true, avatarUrl: true } },
@@ -196,7 +201,7 @@ router.patch('/:workspaceId/actions/:actionId', requireRole('ADMIN', 'MODERATOR'
   }
 })
 
-router.delete('/:workspaceId/actions/:actionId', requireRole('ADMIN', 'MODERATOR'), async (req, res) => {
+router.delete('/:workspaceId/actions/:actionId', requirePermission('DELETE_ACTION'), async (req, res) => {
   try {
     await prisma.actionItem.update({
       where: { id: req.params.actionId },
@@ -211,7 +216,7 @@ router.delete('/:workspaceId/actions/:actionId', requireRole('ADMIN', 'MODERATOR
   }
 })
 
-router.patch('/:workspaceId/actions/:actionId/restore', requireRole('ADMIN', 'MODERATOR'), async (req, res) => {
+router.patch('/:workspaceId/actions/:actionId/restore', requirePermission('DELETE_ACTION'), async (req, res) => {
   try {
     const action = await prisma.actionItem.update({
       where: { id: req.params.actionId },
@@ -267,7 +272,7 @@ router.post('/:workspaceId/actions/reorder', requireRole('ADMIN', 'MODERATOR', '
   }
 })
 
-router.post('/:workspaceId/actions/bulk', requireRole('ADMIN', 'MODERATOR'), async (req, res) => {
+router.post('/:workspaceId/actions/bulk', requirePermission('CREATE_ACTION'), async (req, res) => {
   try {
     const { ids, operation, payload } = z.object({
       ids: z.array(z.string()).min(1),

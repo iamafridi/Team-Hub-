@@ -1,7 +1,7 @@
 const express = require('express')
 const { z } = require('zod')
 const prisma = require('../prisma/client')
-const { requireRole } = require('../middleware/rbac')
+const { requirePermission } = require('../middleware/permissions')
 const { logAction } = require('../utils/auditLog')
 const { emitToWorkspace } = require('../socket/emitter')
 
@@ -106,18 +106,20 @@ router.get('/:id', async (req, res) => {
     if (!workspace) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
-    const hasMembership = workspace.members.some(m => m.userId === req.userId)
-    if (!hasMembership) {
+    const membership = workspace.members.find(m => m.userId === req.userId)
+    if (!membership) {
       return res.status(403).json({ error: 'Forbidden' })
     }
-    res.json({ data: workspace, message: 'Workspace fetched' })
+    req.memberRole = membership.role
+    const { slackWebhookUrl, ...safeWorkspace } = workspace
+    res.json({ data: membership.role === 'ADMIN' ? workspace : safeWorkspace, message: 'Workspace fetched' })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Server error' })
   }
 })
 
-router.patch('/:id', requireRole('ADMIN'), async (req, res) => {
+router.patch('/:id', requirePermission('UPDATE_WORKSPACE'), async (req, res) => {
   try {
     const { name, description, accentColor, slackWebhookUrl } = updateWorkspaceSchema.parse(req.body)
     const workspace = await prisma.workspace.update({
@@ -141,7 +143,7 @@ router.patch('/:id', requireRole('ADMIN'), async (req, res) => {
   }
 })
 
-router.delete('/:id', requireRole('ADMIN'), async (req, res) => {
+router.delete('/:id', requirePermission('DELETE_WORKSPACE'), async (req, res) => {
   try {
     await prisma.workspace.delete({ where: { id: req.params.id } })
     logAction(req.userId, req.params.id, 'DELETE', 'Workspace', req.params.id)
@@ -158,31 +160,19 @@ router.get('/:id/members', async (req, res) => {
       return res.status(400).json({ error: 'Workspace ID required' })
     }
 
-    let workspace = null
-    try {
-      workspace = await prisma.workspace.findUnique({
-        where: { id: req.params.id },
-        include: { members: { select: { userId: true } } },
-      })
-    } catch (dbError) {
-      // Silently continue, workspace will be null
-    }
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: req.params.id },
+      include: { members: { select: { userId: true } } },
+    })
 
     if (!workspace) {
-      // In development, return empty members list (don't create workspace, just return empty)
-      if (process.env.NODE_ENV !== 'production') {
-        return res.json({ data: [], message: 'Members fetched' })
-      }
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    const isMember = workspace.members && workspace.members.some(m => m.userId === req.userId)
+    const isMember = workspace.members.some(m => m.userId === req.userId)
 
     if (!isMember) {
-      // In development, allow access anyway
-      if (process.env.NODE_ENV === 'production') {
-        return res.status(403).json({ error: 'Forbidden' })
-      }
+      return res.status(403).json({ error: 'Forbidden' })
     }
 
     const members = await prisma.workspaceMember.findMany({
@@ -192,15 +182,15 @@ router.get('/:id/members', async (req, res) => {
           select: { id: true, name: true, email: true, avatarUrl: true },
         },
       },
-    }).catch(() => [])
+    })
 
-    res.json({ data: members || [], message: 'Members fetched' })
+    res.json({ data: members, message: 'Members fetched' })
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message })
   }
 })
 
-router.patch('/:id/members/:userId', requireRole('ADMIN'), async (req, res) => {
+router.patch('/:id/members/:userId', requirePermission('CHANGE_MEMBER_ROLE'), async (req, res) => {
   try {
     const { role } = z.object({ role: z.enum(['ADMIN', 'MODERATOR', 'MEMBER']) }).parse(req.body)
     const member = await prisma.workspaceMember.update({
@@ -222,7 +212,7 @@ router.patch('/:id/members/:userId', requireRole('ADMIN'), async (req, res) => {
   }
 })
 
-router.patch('/:id/members/:userId/status', requireRole('ADMIN'), async (req, res) => {
+router.patch('/:id/members/:userId/status', requirePermission('CHANGE_MEMBER_STATUS'), async (req, res) => {
   try {
     const { isActive } = z.object({ isActive: z.boolean() }).parse(req.body)
     const member = await prisma.workspaceMember.update({
@@ -244,7 +234,7 @@ router.patch('/:id/members/:userId/status', requireRole('ADMIN'), async (req, re
   }
 })
 
-router.delete('/:id/members/:userId', requireRole('ADMIN'), async (req, res) => {
+router.delete('/:id/members/:userId', requirePermission('REMOVE_MEMBER'), async (req, res) => {
   try {
     await prisma.workspaceMember.delete({
       where: {
@@ -260,7 +250,7 @@ router.delete('/:id/members/:userId', requireRole('ADMIN'), async (req, res) => 
   }
 })
 
-router.post('/:id/invite', requireRole('ADMIN'), async (req, res) => {
+router.post('/:id/invite', requirePermission('INVITE_MEMBER'), async (req, res) => {
   try {
     const { email, role } = inviteSchema.parse(req.body)
 
@@ -347,7 +337,7 @@ router.post('/join/:token', async (req, res) => {
   }
 })
 
-router.post('/:id/members/generate-invite', requireRole('ADMIN'), async (req, res) => {
+router.post('/:id/members/generate-invite', requirePermission('INVITE_MEMBER'), async (req, res) => {
   try {
     const invite = await prisma.workspaceInvite.create({
       data: {

@@ -1,3 +1,4 @@
+const crypto = require('crypto')
 const cron = require('node-cron')
 const prisma = require('../prisma/client')
 const { sendDigestEmail } = require('../services/emailService')
@@ -25,7 +26,17 @@ async function sendDailyDigest() {
 
     for (const user of usersWithDigest) {
       if (user.notifications.length > 0) {
-        await sendDigestEmail(user.email, user.name, user.notifications)
+        const unsubscribeToken = crypto.randomUUID()
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            emailPreferences: {
+              ...user.emailPreferences,
+              unsubscribeToken,
+            },
+          },
+        })
+        await sendDigestEmail(user.email, user.name, user.notifications, unsubscribeToken)
       }
 
       await prisma.notification.updateMany({

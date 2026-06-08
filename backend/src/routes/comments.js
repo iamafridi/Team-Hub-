@@ -135,7 +135,7 @@ router.post('/goals/:goalId/comments', requireRole('ADMIN', 'MODERATOR', 'MEMBER
   }
 })
 
-router.delete('/goals/:goalId/comments/:commentId', async (req, res) => {
+router.delete('/goals/:goalId/comments/:commentId', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { workspaceId, commentId } = req.params
 

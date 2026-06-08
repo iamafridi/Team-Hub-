@@ -1,10 +1,10 @@
 const express = require('express')
-const { requireRole } = require('../middleware/rbac')
+const { requirePermission } = require('../middleware/permissions')
 const prisma = require('../prisma/client')
 
 const router = express.Router()
 
-router.get('/:workspaceId/audit', requireRole('ADMIN'), async (req, res) => {
+router.get('/:workspaceId/audit', requirePermission('VIEW_AUDIT_LOG'), async (req, res) => {
   try {
     const { entityType, actorId, from, to, limit = 50, cursor } = req.query
 

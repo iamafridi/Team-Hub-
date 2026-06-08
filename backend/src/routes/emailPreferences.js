@@ -1,3 +1,4 @@
+const crypto = require('crypto')
 const express = require('express')
 const { z } = require('zod')
 const prisma = require('../prisma/client')
@@ -12,16 +13,23 @@ router.get('/unsubscribe', async (req, res) => {
       return res.status(400).json({ error: 'Missing unsubscribe token' })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: token }
+    const users = await prisma.user.findMany({
+      where: {
+        emailPreferences: {
+          path: ['unsubscribeToken'],
+          equals: token,
+        },
+      },
     })
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' })
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'Invalid or expired unsubscribe link' })
     }
 
+    const user = users[0]
+
     await prisma.user.update({
-      where: { id: token },
+      where: { id: user.id },
       data: {
         emailPreferences: {
           ...user.emailPreferences,

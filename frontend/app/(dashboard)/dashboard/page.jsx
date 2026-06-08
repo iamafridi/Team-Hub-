@@ -7,7 +7,6 @@ import { useNotificationStore } from '@/store/notificationStore'
 import api from '@/lib/api'
 import { motion } from 'framer-motion'
 import { Zap, Target, Users, Bell } from 'lucide-react'
-import { mockGoals, mockMembers, mockActions } from '@/lib/mockData'
 import {
   DashboardGoalsModal,
   DashboardMembersModal,
@@ -47,16 +46,7 @@ export default function Dashboard() {
           { label: 'Notifications', value: notifications.length.toString(), icon: Bell },
         ])
       } catch (error) {
-        // Use mock data as fallback for development (silent)
-        const activeGoals = mockGoals.filter((g) => g.status !== 'COMPLETED').length
-        const memberCount = mockMembers.length
-
-        setStats([
-          { label: 'Total Workspaces', value: workspaces.length.toString(), icon: Zap },
-          { label: 'Active Goals', value: activeGoals.toString(), icon: Target },
-          { label: 'Team Members', value: memberCount.toString(), icon: Users },
-          { label: 'Notifications', value: notifications.length.toString(), icon: Bell },
-        ])
+        console.error('Failed to fetch dashboard stats:', error)
       }
     }
 

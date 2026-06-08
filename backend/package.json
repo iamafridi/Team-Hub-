@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",
+    "@team-hub/shared": "*",
     "cloudinary": "^1.33.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",

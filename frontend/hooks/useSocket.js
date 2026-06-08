@@ -20,10 +20,9 @@ export function useSocket() {
     if (!activeWorkspace?.id || !user?.id) return
 
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:4000'
+    if (!token) return
     socket = io(socketUrl, {
-      auth: {
-        token: token || user.id,
-      },
+      auth: { token },
       query: {
         workspaceId: activeWorkspace.id,
       },

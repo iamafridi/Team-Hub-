@@ -14,8 +14,6 @@ import { ActionModal } from '@/components/actions/ActionModal'
 import { EntityCommentThread } from '@/components/comments/EntityCommentThread'
 import { ListChecks, Plus, Layout, List } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { mockActions } from '@/lib/mockData'
-
 export default function ActionsPage() {
   const { id: workspaceId } = useParams()
   const { actions, setActions, addAction, updateAction, removeAction, reorderActions } = useActionStore()
@@ -34,8 +32,7 @@ export default function ActionsPage() {
         const response = await api.get(`/workspaces/${workspaceId}/actions`)
         setActions(response.data.data)
       } catch (error) {
-        // Use mock data as fallback for development (silent)
-        setActions(mockActions)
+        console.error('Failed to fetch actions:', error)
       } finally {
         setLoading(false)
       }
@@ -55,15 +52,7 @@ export default function ActionsPage() {
       addAction(response.data.data)
       toast.success(editingAction ? 'Action updated' : 'Action created')
     } catch (error) {
-      // Use mock data for development
-      const newAction = {
-        id: `action-${Date.now()}`,
-        ...formData,
-        goalId: modalData?.goalId || null,
-        status: formData.status || 'todo',
-      }
-      addAction(newAction)
-      toast.success(editingAction ? 'Action updated (demo)' : 'Action created (demo)')
+      toast.error('Failed to save action')
     } finally {
       closeModal()
       setEditingAction(null)

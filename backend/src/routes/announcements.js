@@ -2,6 +2,7 @@ const express = require('express')
 const { z } = require('zod')
 const prisma = require('../prisma/client')
 const { requireRole } = require('../middleware/rbac')
+const { requirePermission } = require('../middleware/permissions')
 const { getVisibilityFilter } = require('../middleware/visibility')
 const { logAction } = require('../utils/auditLog')
 const { emitToWorkspace, emitToUser } = require('../socket/emitter')
@@ -23,7 +24,7 @@ const updateAnnounceSchema = z.object({
 router.get('/:workspaceId/announcements', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { cursor } = req.query
-    const visFilter = getVisibilityFilter(req, 'authorId')
+    const visFilter = getVisibilityFilter(req, 'announcement')
     const announcements = await prisma.announcement.findMany({
       where: { workspaceId: req.params.workspaceId, deletedAt: null, ...visFilter },
       include: {
@@ -52,7 +53,7 @@ router.get('/:workspaceId/announcements', requireRole('ADMIN', 'MODERATOR', 'MEM
   }
 })
 
-router.post('/:workspaceId/announcements', requireRole('ADMIN', 'MODERATOR'), async (req, res) => {
+router.post('/:workspaceId/announcements', requirePermission('CREATE_ANNOUNCEMENT'), async (req, res) => {
   try {
     const { title, content } = createAnnounceSchema.parse(req.body)
     const announcement = await prisma.announcement.create({
@@ -150,7 +151,7 @@ router.patch('/:workspaceId/announcements/:annId/restore', requireRole('ADMIN'),
   }
 })
 
-router.patch('/:workspaceId/announcements/:annId/pin', requireRole('ADMIN'), async (req, res) => {
+router.patch('/:workspaceId/announcements/:annId/pin', requirePermission('PIN_ANNOUNCEMENT'), async (req, res) => {
   try {
     const announcement = await prisma.announcement.findUnique({ where: { id: req.params.annId } })
     const updated = await prisma.announcement.update({
@@ -166,7 +167,7 @@ router.patch('/:workspaceId/announcements/:annId/pin', requireRole('ADMIN'), asy
   }
 })
 
-router.post('/:workspaceId/announcements/:annId/reactions', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
+router.post('/:workspaceId/announcements/:annId/reactions', requirePermission('REACT_ANNOUNCEMENT'), async (req, res) => {
   try {
     const { emoji } = z.object({ emoji: z.string().length(1) }).parse(req.body)
     const existing = await prisma.reaction.findUnique({
@@ -216,7 +217,7 @@ router.get('/:workspaceId/announcements/:annId/comments', requireRole('ADMIN', '
   }
 })
 
-router.post('/:workspaceId/announcements/:annId/comments', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
+router.post('/:workspaceId/announcements/:annId/comments', requirePermission('COMMENT_ANNOUNCEMENT'), async (req, res) => {
   try {
     const { content } = z.object({ content: z.string().min(1) }).parse(req.body)
 
@@ -279,7 +280,7 @@ router.post('/:workspaceId/announcements/:annId/comments', requireRole('ADMIN', 
   }
 })
 
-router.delete('/:workspaceId/announcements/:annId/comments/:commentId', async (req, res) => {
+router.delete('/:workspaceId/announcements/:annId/comments/:commentId', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const comment = await prisma.comment.findUnique({ where: { id: req.params.commentId } })
     if (!comment) {
@@ -298,7 +299,7 @@ router.delete('/:workspaceId/announcements/:annId/comments/:commentId', async (r
   }
 })
 
-router.delete('/:workspaceId/announcements/:annId/reactions/:emoji', async (req, res) => {
+router.delete('/:workspaceId/announcements/:annId/reactions/:emoji', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     await prisma.reaction.deleteMany({
       where: {
@@ -316,7 +317,7 @@ router.delete('/:workspaceId/announcements/:annId/reactions/:emoji', async (req,
   }
 })
 
-router.patch('/:workspaceId/announcements/:annId/unpin', requireRole('ADMIN'), async (req, res) => {
+router.patch('/:workspaceId/announcements/:annId/unpin', requirePermission('PIN_ANNOUNCEMENT'), async (req, res) => {
   try {
     const announcement = await prisma.announcement.update({
       where: { id: req.params.annId },

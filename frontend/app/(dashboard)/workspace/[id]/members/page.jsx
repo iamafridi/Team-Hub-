@@ -12,8 +12,6 @@ import { useAuthStore } from '@/store/authStore'
 import { useOptimistic } from '@/hooks/useOptimistic'
 import InviteMemberModal from '@/components/members/InviteMemberModal'
 import MemberActions from '@/components/members/MemberActions'
-import { mockMembers } from '@/lib/mockData'
-
 export default function MembersPage() {
   const { id: workspaceId } = useParams()
   const [members, setMembers] = useState([])
@@ -52,9 +50,7 @@ export default function MembersPage() {
       setMembers(res.data.data)
       useWorkspaceStore.setState({ members: res.data.data })
     } catch (error) {
-      // Use mock data as fallback for development (silent)
-      setMembers(mockMembers)
-      useWorkspaceStore.setState({ members: mockMembers })
+      console.error('Failed to fetch members:', error)
     } finally {
       setLoading(false)
     }

@@ -1,3 +1,4 @@
+const crypto = require('crypto')
 const nodemailer = require('nodemailer')
 
 let transporter
@@ -112,7 +113,7 @@ async function sendAssignmentEmail(to, assignedByName, actionTitle, workspaceNam
   }
 }
 
-async function sendDigestEmail(to, userName, notifications) {
+async function sendDigestEmail(to, userName, notifications, unsubscribeToken) {
   if (!transporter) return
 
   try {
@@ -125,7 +126,8 @@ async function sendDigestEmail(to, userName, notifications) {
       </li>
     `).join('')
 
-    const unsubscribeLink = `${process.env.API_URL || 'http://localhost:4000'}/email/unsubscribe?token=${to}`
+    const token = unsubscribeToken || crypto.randomUUID()
+    const unsubscribeLink = `${process.env.API_URL || 'http://localhost:4000'}/email/unsubscribe?token=${token}`
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,

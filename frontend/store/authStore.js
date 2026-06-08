@@ -7,6 +7,7 @@ export const useAuthStore = create((set) => ({
   isAuthenticated: false,
   token: null,
   signOut: null,
+  authInitialized: false,
 
   setUser: (user) => {
     if (typeof window !== 'undefined') {
@@ -21,6 +22,7 @@ export const useAuthStore = create((set) => ({
       user,
       isAuthenticated: !!user,
       token: user?.token || null,
+      authInitialized: true,
     })
   },
 
@@ -53,6 +55,7 @@ export const useAuthStore = create((set) => ({
       user: null,
       isAuthenticated: false,
       token: null,
+      authInitialized: true,
     })
   },
 

@@ -1,6 +1,7 @@
 const express = require('express')
 const { z } = require('zod')
 const prisma = require('../prisma/client')
+const { requireRole } = require('../middleware/rbac')
 const { logAction } = require('../utils/auditLog')
 const { emitToWorkspace } = require('../socket/emitter')
 
@@ -18,7 +19,7 @@ const updateMilestoneSchema = z.object({
   dueDate: z.string().datetime().optional(),
 })
 
-router.post('/:goalId/milestones', async (req, res) => {
+router.post('/:goalId/milestones', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { title, dueDate } = createMilestoneSchema.parse(req.body)
     const goal = await prisma.goal.findUnique({ where: { id: req.params.goalId } })
@@ -41,7 +42,7 @@ router.post('/:goalId/milestones', async (req, res) => {
   }
 })
 
-router.patch('/:goalId/milestones/:id', async (req, res) => {
+router.patch('/:goalId/milestones/:id', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { title, progress, completed, dueDate } = updateMilestoneSchema.parse(req.body)
     const goal = await prisma.goal.findUnique({ where: { id: req.params.goalId } })
@@ -66,7 +67,7 @@ router.patch('/:goalId/milestones/:id', async (req, res) => {
   }
 })
 
-router.delete('/:goalId/milestones/:id', async (req, res) => {
+router.delete('/:goalId/milestones/:id', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const goal = await prisma.goal.findUnique({ where: { id: req.params.goalId } })
     await prisma.milestone.delete({ where: { id: req.params.id } })

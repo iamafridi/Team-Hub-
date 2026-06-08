@@ -6,7 +6,6 @@ import api from '@/lib/api'
 import { Button, EmptyState, Badge, Avatar } from '@/components/ui'
 import { Trash2, RotateCcw, X } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { mockTrash } from '@/lib/mockData'
 import { motion, AnimatePresence } from 'framer-motion'
 
 function formatDeletedDate(deletedAt) {
@@ -107,8 +106,7 @@ export default function TrashPage() {
       const response = await api.get(`/workspaces/${workspaceId}/trash`)
       setTrash(response.data.data)
     } catch (error) {
-      // Use mock data as fallback
-      setTrash(mockTrash)
+      console.error('Failed to fetch trash:', error)
     } finally {
       setLoading(false)
     }

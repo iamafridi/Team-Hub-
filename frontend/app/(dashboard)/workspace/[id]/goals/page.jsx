@@ -12,8 +12,6 @@ import { GoalCard } from '@/components/goals/GoalCard'
 import { EntityCommentThread } from '@/components/comments/EntityCommentThread'
 import { Target, Plus } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { mockGoals } from '@/lib/mockData'
-
 const statusFilters = ['All', 'ON_TRACK', 'AT_RISK', 'BEHIND', 'COMPLETED']
 
 export default function GoalsPage() {
@@ -34,8 +32,7 @@ export default function GoalsPage() {
         const response = await api.get(`/workspaces/${workspaceId}/goals`)
         setGoals(response.data.data)
       } catch (error) {
-        // Use mock data as fallback for development (silent)
-        setGoals(mockGoals)
+        console.error('Failed to fetch goals:', error)
       } finally {
         setLoading(false)
       }
@@ -73,19 +70,14 @@ export default function GoalsPage() {
     if (editingGoal) {
       // Update existing goal
       try {
-        await api.put(`/workspaces/${workspaceId}/goals/${editingGoal.id}`, formData)
+        await api.patch(`/workspaces/${workspaceId}/goals/${editingGoal.id}`, formData)
         updateGoal(editingGoal.id, {
           ...editingGoal,
           ...formData,
         })
         toast.success('Goal updated')
       } catch (error) {
-        // Use mock update for development
-        updateGoal(editingGoal.id, {
-          ...editingGoal,
-          ...formData,
-        })
-        toast.success('Goal updated (demo)')
+        toast.error('Failed to update goal')
       }
     } else {
       // Create new goal
@@ -94,15 +86,7 @@ export default function GoalsPage() {
         addGoal(response.data.data)
         toast.success('Goal created')
       } catch (error) {
-        // Use mock data for development
-        const newGoal = {
-          id: `goal-${Date.now()}`,
-          ...formData,
-          status: 'ON_TRACK',
-          owner: { id: 'user-1', name: 'Demo User' },
-        }
-        addGoal(newGoal)
-        toast.success('Goal created (demo)')
+        toast.error('Failed to create goal')
       }
     }
 

@@ -2,6 +2,7 @@ const express = require('express')
 const { z } = require('zod')
 const prisma = require('../prisma/client')
 const { requireRole } = require('../middleware/rbac')
+const { requirePermission } = require('../middleware/permissions')
 const { getVisibilityFilter } = require('../middleware/visibility')
 const { logAction } = require('../utils/auditLog')
 const { emitToWorkspace } = require('../socket/emitter')
@@ -14,6 +15,7 @@ const createGoalSchema = z.object({
   description: z.string().optional(),
   dueDate: z.string().datetime().optional(),
   ownerId: z.string().optional(),
+  recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
 })
 
 const updateGoalSchema = z.object({
@@ -22,12 +24,13 @@ const updateGoalSchema = z.object({
   status: z.enum(['ON_TRACK', 'AT_RISK', 'BEHIND', 'COMPLETED']).optional(),
   progress: z.number().int().min(0).max(100).optional(),
   dueDate: z.string().datetime().optional(),
+  recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
 })
 
 router.get('/:workspaceId/goals', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
     const { cursor } = req.query
-    const visFilter = getVisibilityFilter(req, 'ownerId')
+    const visFilter = getVisibilityFilter(req, 'goal')
     const goals = await prisma.goal.findMany({
       where: { workspaceId: req.params.workspaceId, deletedAt: null, ...visFilter },
       include: {
@@ -62,15 +65,16 @@ router.get('/:workspaceId/goals', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), a
   }
 })
 
-router.post('/:workspaceId/goals', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
+router.post('/:workspaceId/goals', requirePermission('CREATE_GOAL'), async (req, res) => {
   try {
-    const { title, description, dueDate, ownerId } = createGoalSchema.parse(req.body)
+    const { title, description, dueDate, ownerId, recurrenceRule } = createGoalSchema.parse(req.body)
     const goal = await prisma.goal.create({
       data: {
         title,
         description,
         dueDate: dueDate ? new Date(dueDate) : null,
         ownerId: ownerId || req.userId,
+        recurrenceRule: recurrenceRule || null,
         workspaceId: req.params.workspaceId,
       },
       include: {
@@ -96,7 +100,7 @@ router.post('/:workspaceId/goals', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), 
 
 router.get('/:workspaceId/goals/:goalId', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
-    const visFilter = getVisibilityFilter(req, 'ownerId')
+    const visFilter = getVisibilityFilter(req, 'goal')
     const goal = await prisma.goal.findFirst({
       where: { id: req.params.goalId, ...visFilter },
       include: {
@@ -128,7 +132,7 @@ router.get('/:workspaceId/goals/:goalId', requireRole('ADMIN', 'MODERATOR', 'MEM
 
 router.patch('/:workspaceId/goals/:goalId', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {
   try {
-    const { title, description, status, progress, dueDate } = updateGoalSchema.parse(req.body)
+    const { title, description, status, progress, dueDate, recurrenceRule } = updateGoalSchema.parse(req.body)
     const goal = await prisma.goal.findUnique({ where: { id: req.params.goalId } })
     if (goal.ownerId !== req.userId && req.memberRole !== 'ADMIN') {
       return res.status(403).json({ error: 'Forbidden' })
@@ -152,6 +156,7 @@ router.patch('/:workspaceId/goals/:goalId', requireRole('ADMIN', 'MODERATOR', 'M
         ...(status && { status }),
         ...(progress !== undefined && { progress: finalProgress }),
         ...(dueDate && { dueDate: new Date(dueDate) }),
+        ...(recurrenceRule !== undefined && { recurrenceRule }),
       },
       include: {
         owner: { select: { id: true, name: true, avatarUrl: true } },
@@ -185,7 +190,7 @@ router.patch('/:workspaceId/goals/:goalId', requireRole('ADMIN', 'MODERATOR', 'M
   }
 })
 
-router.delete('/:workspaceId/goals/:goalId', requireRole('ADMIN'), async (req, res) => {
+router.delete('/:workspaceId/goals/:goalId', requirePermission('DELETE_GOAL'), async (req, res) => {
   try {
     await prisma.goal.update({
       where: { id: req.params.goalId },
@@ -200,7 +205,7 @@ router.delete('/:workspaceId/goals/:goalId', requireRole('ADMIN'), async (req, r
   }
 })
 
-router.patch('/:workspaceId/goals/:goalId/restore', requireRole('ADMIN'), async (req, res) => {
+router.patch('/:workspaceId/goals/:goalId/restore', requirePermission('DELETE_GOAL'), async (req, res) => {
   try {
     const goal = await prisma.goal.update({
       where: { id: req.params.goalId },

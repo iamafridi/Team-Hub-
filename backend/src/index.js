@@ -1,4 +1,10 @@
 require('dotenv').config()
+
+if (process.env.ALLOW_DEV_AUTH === 'true' && process.env.NODE_ENV === 'production') {
+  console.error('CRITICAL: ALLOW_DEV_AUTH must not be true in production')
+  process.exit(1)
+}
+
 const Sentry = process.env.SENTRY_DSN ? require('@sentry/node') : null
 const express = require('express')
 const cors = require('cors')
@@ -132,46 +138,46 @@ app.get('/health', async (req, res) => {
   }
 })
 
-app.use('/workspaces', authMiddleware, workspaceRoutes)
-app.use('/workspaces', authMiddleware, writeLimiter, goalRoutes)
+const workspaceSubRouter = express.Router()
+workspaceSubRouter.use(authMiddleware)
+workspaceSubRouter.use('/', workspaceRoutes)
+workspaceSubRouter.use('/', writeLimiter, goalRoutes)
+workspaceSubRouter.use('/', writeLimiter, actionRoutes)
+workspaceSubRouter.use('/', writeLimiter, announcementRoutes)
+workspaceSubRouter.use('/', analyticsRoutes)
+workspaceSubRouter.use('/', auditRoutes)
+workspaceSubRouter.use('/', writeLimiter, commentRoutes)
+workspaceSubRouter.use('/', searchRoutes)
+workspaceSubRouter.use('/', activityRoutes)
+workspaceSubRouter.use('/', writeLimiter, trashRoutes)
+
+app.use('/workspaces', workspaceSubRouter)
 app.use('/goals', authMiddleware, writeLimiter, milestoneRoutes)
-app.use('/workspaces', authMiddleware, writeLimiter, actionRoutes)
-app.use('/workspaces', authMiddleware, writeLimiter, announcementRoutes)
 app.use('/notifications', authMiddleware, notificationRoutes)
-app.use('/workspaces', authMiddleware, analyticsRoutes)
-app.use('/workspaces', authMiddleware, auditRoutes)
 app.use('/upload', authMiddleware, writeLimiter, uploadRoutes)
-app.use('/workspaces', authMiddleware, writeLimiter, commentRoutes)
-app.use('/workspaces', authMiddleware, searchRoutes)
-app.use('/workspaces', authMiddleware, activityRoutes)
-app.use('/workspaces', authMiddleware, writeLimiter, trashRoutes)
 app.use('/email', emailPreferencesRoutes)
 
-io.use(async (socket, next) => {
-  try {
-    const token = socket.handshake.auth.token
-    const admin = require('./firebase/admin')
+  io.use(async (socket, next) => {
+    try {
+      const token = socket.handshake.auth.token
+      const admin = require('./firebase/admin')
 
-    if (!token || !admin.isInitialized()) {
-      if (process.env.ALLOW_DEV_AUTH === 'true') {
-        socket.userId = 'dev-user'
-        return next()
+      if (!token || !admin.isInitialized()) {
+        return next(new Error('Unauthorized'))
       }
-      return next(new Error('Unauthorized'))
-    }
 
-    const decoded = await admin.auth().verifyIdToken(token)
-    const user = await prisma.user.findUnique({ where: { clerkId: decoded.uid } })
-    if (!user) {
-      return next(new Error('User not found'))
-    }
+      const decoded = await admin.auth().verifyIdToken(token)
+      const user = await prisma.user.findUnique({ where: { clerkId: decoded.uid } })
+      if (!user) {
+        return next(new Error('User not found'))
+      }
 
-    socket.userId = user.id
-    next()
-  } catch (error) {
-    next(new Error('Unauthorized'))
-  }
-})
+      socket.userId = user.id
+      next()
+    } catch (error) {
+      next(new Error('Unauthorized'))
+    }
+  })
 
 io.on('connection', async (socket) => {
   try {
