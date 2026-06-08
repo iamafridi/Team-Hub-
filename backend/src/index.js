@@ -134,11 +134,7 @@ app.get('/docs.json', (req, res) => {
 app.get('/health', async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`
-    res.json({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      firebaseAdmin: admin.isInitialized(),
-    })
+    res.json({ status: 'ok', timestamp: new Date().toISOString() })
   } catch (e) {
     res.status(503).json({
       status: 'error',
