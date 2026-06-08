@@ -169,7 +169,7 @@ router.patch('/:workspaceId/announcements/:annId/pin', requirePermission('PIN_AN
 
 router.post('/:workspaceId/announcements/:annId/reactions', requirePermission('REACT_ANNOUNCEMENT'), async (req, res) => {
   try {
-    const { emoji } = z.object({ emoji: z.string().length(1) }).parse(req.body)
+    const { emoji } = z.object({ emoji: z.string().min(1).max(10) }).parse(req.body)
     const existing = await prisma.reaction.findUnique({
       where: {
         userId_announcementId_emoji: {
