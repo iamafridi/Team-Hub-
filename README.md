@@ -147,8 +147,8 @@ A production-ready team collaboration platform for goal tracking, task managemen
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/iamafridi/FredoCloud.git
-cd FredoCloud
+git clone https://github.com/iamafridi/Team-Hub-.git
+cd Team-Hub-
 npm install --legacy-peer-deps
 ```
 
@@ -193,7 +193,7 @@ npm run dev
 ## 📁 Project Structure
 
 ```
-freducloud/
+team-hub/
 ├── backend/                          # Express.js API server
 │   ├── src/
 │   │   ├── routes/                   # 15 route modules
