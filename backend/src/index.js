@@ -59,6 +59,8 @@ const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000'
 const productionOrigins = [
   clientUrl,
   'https://team-hub.up.railway.app',
+  'https://teamhub-by-afridi.vercel.app',
+  'https://team-hub-snowy.vercel.app',
 ].filter(Boolean)
 
 const developmentOrigins = [
@@ -132,10 +134,25 @@ app.get('/docs.json', (req, res) => {
 app.get('/health', async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`
-    res.json({ status: 'ok', timestamp: new Date().toISOString() })
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      firebaseAdmin: admin.isInitialized(),
+    })
   } catch (e) {
     res.status(503).json({ status: 'error', message: 'Database unreachable' })
   }
+})
+
+app.get('/debug/auth', (req, res) => {
+  const admin = require('./firebase/admin')
+  res.json({
+    firebaseInitialized: admin.isInitialized(),
+    hasServiceAccountEnv: !!process.env.FIREBASE_SERVICE_ACCOUNT,
+    hasCI: !!process.env.CI,
+    nodeEnv: process.env.NODE_ENV,
+    clientUrl: process.env.CLIENT_URL || 'not set',
+  })
 })
 
 const workspaceSubRouter = express.Router()
