@@ -155,6 +155,15 @@ app.get('/debug/auth', (req, res) => {
   })
 })
 
+app.get('/debug/env', (req, res) => {
+  res.json({
+    AUTH_DISABLED: process.env.AUTH_DISABLED,
+    AUTH_DISABLED_type: typeof process.env.AUTH_DISABLED,
+    NODE_ENV: process.env.NODE_ENV,
+    CI: process.env.CI,
+  })
+})
+
 const workspaceSubRouter = express.Router()
 workspaceSubRouter.use(authMiddleware)
 workspaceSubRouter.use('/', workspaceRoutes)
