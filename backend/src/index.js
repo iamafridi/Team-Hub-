@@ -150,13 +150,17 @@ app.use('/email', emailPreferencesRoutes)
 io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth.token
-    if (!token) {
+    const admin = require('./firebase/admin')
+
+    if (!token || !admin.isInitialized()) {
+      if (process.env.ALLOW_DEV_AUTH === 'true') {
+        socket.userId = 'dev-user'
+        return next()
+      }
       return next(new Error('Unauthorized'))
     }
 
-    const admin = require('./firebase/admin')
     const decoded = await admin.auth().verifyIdToken(token)
-
     const user = await prisma.user.findUnique({ where: { clerkId: decoded.uid } })
     if (!user) {
       return next(new Error('User not found'))
