@@ -69,7 +69,16 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
+    console.log('[Workspace Create] req.userId:', req.userId)
+    console.log('[Workspace Create] body:', JSON.stringify(req.body))
     const { name, description, accentColor } = createWorkspaceSchema.parse(req.body)
+    console.log('[Workspace Create] parsed:', { name, description, accentColor })
+
+    if (!req.userId) {
+      console.error('[Workspace Create] Missing userId in request')
+      return res.status(401).json({ error: 'Authentication required' })
+    }
+
     const workspace = await prisma.workspace.create({
       data: {
         name,
@@ -81,14 +90,16 @@ router.post('/', async (req, res) => {
       },
       include: { members: true },
     })
+    console.log('[Workspace Create] created:', workspace.id)
     logAction(req.userId, workspace.id, 'CREATE', 'Workspace', workspace.id)
     res.status(201).json({ data: workspace, message: 'Workspace created' })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input' })
     }
-    console.error(error)
-    res.status(500).json({ error: 'Server error' })
+    console.error('[Workspace Create] Error:', error)
+    console.error('[Workspace Create] Error stack:', error.stack)
+    res.status(500).json({ error: 'Server error', details: error.message })
   }
 })
 
@@ -317,13 +328,29 @@ router.post('/join/:token', async (req, res) => {
     if (invite.expiresAt < new Date()) {
       return res.status(400).json({ error: 'Invite expired' })
     }
-    const member = await prisma.workspaceMember.create({
-      data: {
-        userId: req.userId,
-        workspaceId: invite.workspaceId,
-        role: invite.role,
+    if (invite.status === 'ACCEPTED') {
+      return res.status(400).json({ error: 'Invite already accepted' })
+    }
+
+    const existingMember = await prisma.workspaceMember.findUnique({
+      where: {
+        userId_workspaceId: { userId: req.userId, workspaceId: invite.workspaceId },
       },
     })
+
+    let member
+    if (existingMember) {
+      member = existingMember
+    } else {
+      member = await prisma.workspaceMember.create({
+        data: {
+          userId: req.userId,
+          workspaceId: invite.workspaceId,
+          role: invite.role,
+        },
+      })
+    }
+
     await prisma.workspaceInvite.update({
       where: { id: invite.id },
       data: { status: 'ACCEPTED' },
@@ -332,8 +359,8 @@ router.post('/join/:token', async (req, res) => {
     emitToWorkspace(invite.workspaceId, 'member:joined', { userId: req.userId })
     res.json({ data: member, message: 'Workspace joined' })
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Server error' })
+    console.error('[Join Workspace] Error:', error)
+    res.status(500).json({ error: 'Server error', details: error.message })
   }
 })
 

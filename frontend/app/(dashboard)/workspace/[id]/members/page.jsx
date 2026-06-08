@@ -270,7 +270,7 @@ export default function MembersPage() {
                       </button>
                       <AnimatePresence>
                         {openMenuId === member.id && (
-                          <MemberActions
+                          <MemberActions key={member.id + '-actions'}
                             member={member}
                             onChangeRole={handleChangeRole}
                             onChangeStatus={handleChangeStatus}

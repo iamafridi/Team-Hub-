@@ -23,7 +23,7 @@ export default function AcceptInvitePage() {
 
   async function acceptInvite() {
     if (!user) {
-      router.push(`/sign-in?redirect=/accept-invite/${token}`)
+      router.push(`/login?redirect=/accept-invite/${token}`)
       return
     }
 

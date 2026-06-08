@@ -1,78 +1,54 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Download } from 'lucide-react'
+import { Download, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui'
+import api from '@/lib/api'
 
-const mockAuditLog = [
-  {
-    id: '001',
-    timestamp: new Date('2026-05-06T14:23:00'),
-    actor: 'asafa',
-    action: 'INVITE.CREATE',
-    description: 'INVITE · CROTTGEF801...',
-    details: 'Invited member to workspace',
-  },
-  {
-    id: '002',
-    timestamp: new Date('2026-05-06T10:15:00'),
-    actor: 'asafa',
-    action: 'WORKSPACE.CREATE',
-    description: 'WORKSPACE · CROTTFMBE801...',
-    details: 'Created new workspace',
-  },
-  {
-    id: '003',
-    timestamp: new Date('2026-05-05T09:42:00'),
-    actor: 'admin',
-    action: 'GOAL.CREATE',
-    description: 'Goal created: Q3 Planning',
-    details: 'New goal created by admin',
-  },
-  {
-    id: '004',
-    timestamp: new Date('2026-05-05T08:30:00'),
-    actor: 'asafa',
-    action: 'MEMBER.ROLE_CHANGE',
-    description: 'Changed role to ADMIN',
-    details: 'Updated member permissions',
-  },
-  {
-    id: '005',
-    timestamp: new Date('2026-05-04T16:20:00'),
-    actor: 'system',
-    action: 'WORKSPACE.UPDATED',
-    description: 'Workspace settings updated',
-    details: 'Automatic update',
-  },
-]
+function formatAction(action, entityType) {
+  const entity = (entityType || '').replace(/([a-z])([A-Z])/g, '$1 $2')
+  return `${entity}.${action}`
+}
 
 export default function AuditPage() {
   const { id: workspaceId } = useParams()
+  const [logs, setLogs] = useState([])
+  const [loading, setLoading] = useState(true)
   const [actor, setActor] = useState('')
   const [action, setAction] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
 
+  useEffect(() => {
+    if (!workspaceId) return
+    setLoading(true)
+    api.get(`/workspaces/${workspaceId}/audit`)
+      .then((res) => setLogs(res.data.data || []))
+      .catch((err) => console.error('Failed to fetch audit logs:', err))
+      .finally(() => setLoading(false))
+  }, [workspaceId])
+
   const filteredLogs = useMemo(() => {
-    return mockAuditLog.filter((log) => {
-      const actorMatch = !actor || log.actor.toLowerCase().includes(actor.toLowerCase())
-      const actionMatch = !action || log.action.toLowerCase().includes(action.toLowerCase())
-      const fromMatch = !fromDate || new Date(log.timestamp) >= new Date(fromDate)
-      const toMatch = !toDate || new Date(log.timestamp) <= new Date(toDate)
+    return logs.filter((log) => {
+      const actorName = log.actor?.name || log.actorId || ''
+      const actionLabel = `${log.action} ${log.entityType || ''}`
+      const actorMatch = !actor || actorName.toLowerCase().includes(actor.toLowerCase())
+      const actionMatch = !action || actionLabel.toLowerCase().includes(action.toLowerCase())
+      const fromMatch = !fromDate || new Date(log.createdAt) >= new Date(fromDate)
+      const toMatch = !toDate || new Date(log.createdAt) <= new Date(toDate + 'T23:59:59')
       return actorMatch && actionMatch && fromMatch && toMatch
     })
-  }, [actor, action, fromDate, toDate])
+  }, [logs, actor, action, fromDate, toDate])
 
   const downloadCSV = () => {
     const headers = ['Timestamp', 'Actor', 'Action', 'Description']
     const rows = filteredLogs.map((log) => [
-      log.timestamp.toLocaleString(),
-      log.actor,
-      log.action,
-      log.details,
+      new Date(log.createdAt).toLocaleString(),
+      log.actor?.name || log.actorId,
+      formatAction(log.action, log.entityType),
+      `${log.entityType} · ${log.entityId}`,
     ])
 
     const csvContent = [
@@ -200,7 +176,11 @@ export default function AuditPage() {
           § ENTRIES · {filteredLogs.length.toString().padStart(2, '0')}
         </div>
 
-        {filteredLogs.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-text-muted" />
+          </div>
+        ) : filteredLogs.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-text-muted">No audit entries match your filters.</p>
           </div>
@@ -218,20 +198,26 @@ export default function AuditPage() {
                   <div>
                     <p className="text-xs text-text-muted uppercase">Timestamp</p>
                     <p className="text-sm font-medium text-text-primary">
-                      {log.timestamp.toLocaleString()}
+                      {new Date(log.createdAt).toLocaleString()}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-text-muted uppercase">Actor</p>
-                    <p className="text-sm font-medium text-text-primary">{log.actor}</p>
+                    <p className="text-sm font-medium text-text-primary">
+                      {log.actor?.name || log.actorId}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs text-text-muted uppercase">Action</p>
-                    <p className="text-sm font-medium text-text-primary">{log.action}</p>
+                    <p className="text-sm font-medium text-text-primary">
+                      {formatAction(log.action, log.entityType)}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs text-text-muted uppercase">Description</p>
-                    <p className="text-sm font-medium text-text-primary">{log.details}</p>
+                    <p className="text-sm font-medium text-text-primary">
+                      {log.entityType} · {log.entityId}
+                    </p>
                   </div>
                 </div>
               </motion.div>

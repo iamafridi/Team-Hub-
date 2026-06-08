@@ -15,10 +15,10 @@ const createActionSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
-  assigneeId: z.string().optional(),
-  goalId: z.string().optional(),
-  dueDate: z.string().datetime().optional(),
-  recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
+  assigneeId: z.string().nullable().optional(),
+  goalId: z.string().nullable().optional(),
+  dueDate: z.string().optional(),
+  recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).nullable().optional(),
 })
 
 const updateActionSchema = z.object({
@@ -27,9 +27,9 @@ const updateActionSchema = z.object({
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
   status: z.enum(['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE']).optional(),
   progress: z.number().int().min(0).max(100).optional(),
-  assigneeId: z.string().optional(),
-  dueDate: z.string().datetime().optional(),
-  recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
+  assigneeId: z.string().nullable().optional(),
+  dueDate: z.string().optional(),
+  recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).nullable().optional(),
 })
 
 router.get('/:workspaceId/actions', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {

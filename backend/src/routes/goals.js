@@ -13,9 +13,9 @@ const router = express.Router()
 const createGoalSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
-  dueDate: z.string().datetime().optional(),
-  ownerId: z.string().optional(),
-  recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
+  dueDate: z.string().optional(),
+  ownerId: z.string().nullable().optional(),
+  recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).nullable().optional(),
 })
 
 const updateGoalSchema = z.object({
@@ -23,8 +23,8 @@ const updateGoalSchema = z.object({
   description: z.string().optional(),
   status: z.enum(['ON_TRACK', 'AT_RISK', 'BEHIND', 'COMPLETED']).optional(),
   progress: z.number().int().min(0).max(100).optional(),
-  dueDate: z.string().datetime().optional(),
-  recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
+  dueDate: z.string().optional(),
+  recurrenceRule: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).nullable().optional(),
 })
 
 router.get('/:workspaceId/goals', requireRole('ADMIN', 'MODERATOR', 'MEMBER'), async (req, res) => {

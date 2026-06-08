@@ -82,7 +82,7 @@ export default function GoalsPage() {
     } else {
       // Create new goal
       try {
-        const response = await api.post(`/workspaces/${workspaceId}/goals`, formData)
+        const response = await api.post(`/workspaces/${workspaceId}/goals`, { ...formData, ownerId: formData.assigneeId })
         addGoal(response.data.data)
         toast.success('Goal created')
       } catch (error) {

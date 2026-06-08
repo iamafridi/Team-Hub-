@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 import { useFirebaseAuth } from './FirebaseProvider'
@@ -15,6 +15,8 @@ export function EmailPasswordForm() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams?.get('redirect') || '/dashboard'
   const { signIn } = useFirebaseAuth()
   const theme = useUIStore((s) => s.theme)
   const isDark = theme === 'dark'
@@ -32,7 +34,7 @@ export function EmailPasswordForm() {
     try {
       const provider = new GoogleAuthProvider()
       await signInWithPopup(auth, provider)
-      router.replace('/dashboard')
+      router.replace(redirectTo)
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user') {
         setError('Google sign-in failed. Please try again.')
@@ -48,7 +50,7 @@ export function EmailPasswordForm() {
     setLoading(true)
     try {
       await signIn(email, password)
-      router.replace('/dashboard')
+      router.replace(redirectTo)
     } catch (err) {
       if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
         setError('Invalid email or password')
