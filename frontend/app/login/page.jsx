@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { EmailPasswordForm } from '@/components/auth/EmailPasswordForm'
@@ -84,7 +84,6 @@ function useGitHubData() {
 
 export default function LoginPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const user = useAuthStore((s) => s.user)
   const theme = useUIStore((s) => s.theme)
   const toggleTheme = useUIStore((s) => s.toggleTheme)
@@ -96,10 +95,11 @@ export default function LoginPage() {
   useEffect(() => { setMounted(true) }, [])
   useEffect(() => {
     if (mounted && user) {
-      const redirect = searchParams?.get('redirect')
+      const params = new URLSearchParams(window.location.search)
+      const redirect = params.get('redirect')
       router.replace(redirect || '/dashboard')
     }
-  }, [mounted, user, router, searchParams])
+  }, [mounted, user, router])
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
   }, [theme])
