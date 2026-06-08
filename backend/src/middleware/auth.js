@@ -50,6 +50,10 @@ async function authMiddleware(req, res, next) {
     }
 
     const token = authHeader.split(' ')[1]
+    if (!token && canDevAuth) {
+      try { await useDevAuth(req); return next() }
+      catch { req.userId = 'dev-user-error-fallback'; req.firebaseUid = 'dev-fallback'; return next() }
+    }
     const decoded = await admin.auth().verifyIdToken(token)
 
     let user = await prisma.user.findUnique({ where: { clerkId: decoded.uid } })

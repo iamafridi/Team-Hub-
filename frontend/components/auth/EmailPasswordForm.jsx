@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 import { useFirebaseAuth } from './FirebaseProvider'
 
 export function EmailPasswordForm() {
@@ -10,8 +12,25 @@ export function EmailPasswordForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const router = useRouter()
   const { signIn } = useFirebaseAuth()
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true)
+    setError('')
+    try {
+      const provider = new GoogleAuthProvider()
+      await signInWithPopup(auth, provider)
+      router.replace('/dashboard')
+    } catch (err) {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        setError('Google sign-in failed. Please try again.')
+      }
+    } finally {
+      setGoogleLoading(false)
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
