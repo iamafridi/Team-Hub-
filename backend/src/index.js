@@ -140,7 +140,11 @@ app.get('/health', async (req, res) => {
       firebaseAdmin: admin.isInitialized(),
     })
   } catch (e) {
-    res.status(503).json({ status: 'error', message: 'Database unreachable' })
+    res.status(503).json({
+      status: 'error',
+      message: 'Database unreachable',
+      detail: e.message?.substring(0, 300),
+    })
   }
 })
 
