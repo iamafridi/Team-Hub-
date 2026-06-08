@@ -5,6 +5,14 @@ if (process.env.ALLOW_DEV_AUTH === 'true' && process.env.NODE_ENV === 'productio
   process.exit(1)
 }
 
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED REJECTION:', reason)
+})
+
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err)
+})
+
 const Sentry = process.env.SENTRY_DSN ? require('@sentry/node') : null
 const express = require('express')
 const cors = require('cors')
@@ -101,7 +109,12 @@ const writeLimiter = rateLimit({
 app.use(helmet())
 app.use(morgan('dev'))
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true)
+    callback(null, allowedOrigins.some(o =>
+      o.toLowerCase() === origin.toLowerCase()
+    ))
+  },
   credentials: true,
 }))
 app.use(express.json())
