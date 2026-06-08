@@ -11,8 +11,6 @@ healthcheckTimeout = 30
 
 [[services]]
 name = "web"
-root = "."
-[services.build]
-cmd = "npm run build -w @team-hub/web"
+root = "frontend"
 [services.deploy]
-startCommand = "npm run start -w @team-hub/web"
+startCommand = "npm run start"

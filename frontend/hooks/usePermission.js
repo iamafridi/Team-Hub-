@@ -2,7 +2,7 @@
 
 import { useWorkspaceStore } from '@/store/workspaceStore'
 import { useAuthStore } from '@/store/authStore'
-import { PERMISSIONS } from '@team-hub/shared'
+import { PERMISSIONS } from '@/lib/permissions'
 
 export function usePermission() {
   const { activeWorkspace, members } = useWorkspaceStore()
