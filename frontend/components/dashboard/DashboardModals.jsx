@@ -24,12 +24,17 @@ export function DashboardGoalsModal({ workspaceId, isOpen, onClose, currentUser 
 
   useEffect(() => {
     if (isOpen && view === 'list') {
-      fetchGoals()
+      if (workspaceId) {
+        fetchGoals()
+      } else {
+        setLoading(false)
+      }
     }
     setIsAdmin(currentUser?.role === 'ADMIN')
-  }, [isOpen, view, currentUser])
+  }, [isOpen, view, currentUser, workspaceId])
 
   const fetchGoals = async () => {
+    if (!workspaceId) return
     try {
       setLoading(true)
       const response = await api.get(`/workspaces/${workspaceId}/goals`)
@@ -54,6 +59,7 @@ export function DashboardGoalsModal({ workspaceId, isOpen, onClose, currentUser 
   }
 
   const handleUpdateGoal = async () => {
+    if (!workspaceId) return
     if (!editForm.title.trim()) {
       toast.error('Title is required')
       return
@@ -82,6 +88,7 @@ export function DashboardGoalsModal({ workspaceId, isOpen, onClose, currentUser 
   }
 
   const handleDeleteGoal = async () => {
+    if (!workspaceId) return
     if (!confirm('Delete this goal? This cannot be undone.')) return
 
     try {
@@ -95,6 +102,7 @@ export function DashboardGoalsModal({ workspaceId, isOpen, onClose, currentUser 
   }
 
   const handleProgressChange = async (newProgress) => {
+    if (!workspaceId) return
     try {
       setProgressUpdating(true)
       await api.patch(`/workspaces/${workspaceId}/goals/${selected.id}`, { progress: newProgress })
@@ -329,12 +337,17 @@ export function DashboardMembersModal({ workspaceId, isOpen, onClose, currentUse
 
   useEffect(() => {
     if (isOpen && view === 'list') {
-      fetchMembers()
+      if (workspaceId) {
+        fetchMembers()
+      } else {
+        setLoading(false)
+      }
     }
     setIsAdmin(currentUser?.role === 'ADMIN')
-  }, [isOpen, view, currentUser])
+  }, [isOpen, view, currentUser, workspaceId])
 
   const fetchMembers = async () => {
+    if (!workspaceId) return
     try {
       setLoading(true)
       const response = await api.get(`/workspaces/${workspaceId}/members`)
@@ -353,6 +366,7 @@ export function DashboardMembersModal({ workspaceId, isOpen, onClose, currentUse
   }
 
   const handleUpdateRole = async () => {
+    if (!workspaceId) return
     try {
       setUpdating(true)
       await api.patch(`/workspaces/${workspaceId}/members/${selected.userId}`, { role: selectedRole })
@@ -367,6 +381,7 @@ export function DashboardMembersModal({ workspaceId, isOpen, onClose, currentUse
   }
 
   const handleToggleActive = async () => {
+    if (!workspaceId) return
     try {
       setUpdating(true)
       await api.patch(`/workspaces/${workspaceId}/members/${selected.userId}/status`, { isActive: !selected.isActive })
@@ -381,6 +396,7 @@ export function DashboardMembersModal({ workspaceId, isOpen, onClose, currentUse
   }
 
   const handleRemoveMember = async () => {
+    if (!workspaceId) return
     if (!confirm('Remove this member from the workspace? This cannot be undone.')) return
 
     try {
