@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
-import { EmailPasswordForm } from '@/components/auth/EmailPasswordForm'
+import { RegisterForm } from '@/components/auth/RegisterForm'
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter()
   const user = useAuthStore((s) => s.user)
   const [mounted, setMounted] = useState(false)
@@ -21,7 +21,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
-      {/* LEFT COLUMN — Marketing */}
+      {/* LEFT COLUMN — Marketing (identical to login page) */}
       <div
         className="hidden lg:flex flex-col justify-between w-[60%] relative"
         style={{ backgroundColor: '#f2ede3' }}
@@ -90,29 +90,28 @@ export default function LoginPage() {
         {/* Bottom bar */}
         <div className="flex items-center justify-between px-10 pb-6 text-[11px] font-mono" style={{ color: '#888' }}>
           <span>
-            &nbsp;NOW @<span style={{ color: '#d4431a' }}>grace.h</span> closed{' '}
-            <span style={{ color: '#d4431a' }}>ITEM-093</span> &middot; done
+            &nbsp;NOW @<span style={{ color: '#d4431a' }}>ada.l</span> shipped{' '}
+            <span style={{ color: '#d4431a' }}>OKR-241</span> &middot; +12%
           </span>
           <span>UTC</span>
         </div>
       </div>
 
-      {/* RIGHT COLUMN — Auth Form */}
+      {/* RIGHT COLUMN — Register Form */}
       <div
         className="w-full lg:w-[40%] flex flex-col justify-center px-8 sm:px-14 lg:px-16 relative"
         style={{ backgroundColor: '#ede8df' }}
       >
-        {/* Vertical divider */}
         <div className="hidden lg:block absolute left-0 top-0 bottom-0 w-px" style={{ backgroundColor: '#d4cfc5' }} />
 
         {/* Step label */}
         <div className="flex items-center gap-2 mb-10">
           <span className="text-[10px] tracking-[0.2em] uppercase" style={{ color: '#999' }}>
-            &mdash; STEP 01 / SIGN IN
+            &mdash; STEP 01 / OPEN AN ACCOUNT
           </span>
           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#d4431a' }} />
           <span className="text-[10px] tracking-[0.15em]" style={{ color: '#aaa' }}>
-            EVENING DESK &middot; 18:18
+            AFTER HOURS &middot; 01:52
           </span>
         </div>
 
@@ -121,19 +120,20 @@ export default function LoginPage() {
           className="text-4xl leading-tight mb-2"
           style={{ fontFamily: "'Fraunces', Georgia, serif", color: '#1a1a1a' }}
         >
-          Welcome <span className="italic">back.</span>
+          Open the <span className="italic">workbench.</span>
+          <span style={{ color: '#d4431a' }}>.</span>
         </h2>
         <p className="text-sm mb-8" style={{ color: '#888' }}>
-          New to the workbench?{' '}
-          <a href="/register" className="underline" style={{ color: '#1a1a1a' }}>Open an account &rarr;</a>
+          Already with us?{' '}
+          <a href="/login" className="underline" style={{ color: '#1a1a1a' }}>Sign in instead &rarr;</a>
         </p>
 
         {/* Form */}
-        <EmailPasswordForm />
+        <RegisterForm />
 
-        {/* Footer */}
+        {/* Bottom */}
         <p className="mt-10 text-center text-[9px] tracking-[0.3em] uppercase" style={{ color: '#aaa' }}>
-          ENCRYPTED IN TRANSIT &middot; NEVER RESOLD
+          &copy; 2026 TEAM HUB
         </p>
       </div>
     </div>
