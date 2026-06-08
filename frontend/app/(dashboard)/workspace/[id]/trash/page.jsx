@@ -98,6 +98,7 @@ export default function TrashPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!workspaceId) return
     fetchTrash()
   }, [workspaceId])
 

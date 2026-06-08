@@ -48,6 +48,7 @@ export default function CalendarPage() {
   }
 
   useEffect(() => {
+    if (!workspaceId) return
     fetchData()
   }, [workspaceId])
 

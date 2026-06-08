@@ -72,10 +72,17 @@ export function DashboardClient({ children }) {
 
   useEffect(() => {
     if (!mounted) return
-    if (!activeWorkspace) {
+    if (workspaces.length === 0) {
       fetchWorkspaces()
     }
-  }, [activeWorkspace, setWorkspaces, setActiveWorkspace, mounted])
+  }, [workspaces.length, setWorkspaces, setActiveWorkspace, mounted])
+
+  useEffect(() => {
+    if (!mounted) return
+    if (activeWorkspace?.id && workspaces.length > 0) {
+      fetchMembers(activeWorkspace.id)
+    }
+  }, [activeWorkspace?.id, mounted])
 
   async function fetchWorkspaces() {
     try {
@@ -86,6 +93,15 @@ export function DashboardClient({ children }) {
       }
     } catch (error) {
       console.error('Failed to fetch workspaces:', error)
+    }
+  }
+
+  async function fetchMembers(workspaceId) {
+    try {
+      const res = await api.get(`/workspaces/${workspaceId}/members`)
+      useWorkspaceStore.setState({ members: res.data.data })
+    } catch (error) {
+      console.error('Failed to fetch members:', error)
     }
   }
 
@@ -147,7 +163,8 @@ export function DashboardClient({ children }) {
                   {navLinks.map((link, idx) => {
                     const Icon = link.icon
                     const active = isNavActive(link.href)
-                    const href = link.href === 'dashboard' ? '/dashboard' : activeWorkspace ? `/workspace/${activeWorkspace.id}/${link.href}` : '#'
+                    const firstId = workspaces[0]?.id
+                    const href = link.href === 'dashboard' ? '/dashboard' : firstId ? `/workspace/${firstId}/${link.href}` : '#'
                     return (
                       <motion.div key={link.href} whileHover={{ x: 2 }} transition={{ duration: 0.1 }}>
                         <Link

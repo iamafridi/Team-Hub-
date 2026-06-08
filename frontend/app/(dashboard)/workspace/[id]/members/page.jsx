@@ -41,6 +41,7 @@ export default function MembersPage() {
   const isAdmin = currentMember?.role === 'ADMIN' || members.some(m => m.role === 'ADMIN') || members.length === 0
 
   useEffect(() => {
+    if (!workspaceId) return
     fetchMembers()
   }, [workspaceId])
 

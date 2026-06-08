@@ -14,8 +14,10 @@ export const useAuthStore = create((set) => ({
       if (user) {
         const { token, ...safeUser } = user
         localStorage.setItem('user', JSON.stringify(safeUser))
+        if (token) localStorage.setItem('token', token)
       } else {
         localStorage.removeItem('user')
+        localStorage.removeItem('token')
       }
     }
     set({
@@ -31,12 +33,15 @@ export const useAuthStore = create((set) => ({
   loadUser: () => {
     if (typeof window !== 'undefined') {
       const storedUser = localStorage.getItem('user')
+      const storedToken = localStorage.getItem('token')
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser)
           set({
             user,
             isAuthenticated: !!user,
+            token: storedToken || null,
+            authInitialized: true,
           })
           return user
         } catch (e) {
@@ -50,6 +55,7 @@ export const useAuthStore = create((set) => ({
   clearUser: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user')
+      localStorage.removeItem('token')
     }
     set({
       user: null,
@@ -65,6 +71,7 @@ export const useAuthStore = create((set) => ({
       if (typeof window !== 'undefined' && updatedUser) {
         const { token, ...safeUser } = updatedUser
         localStorage.setItem('user', JSON.stringify(safeUser))
+        if (token) localStorage.setItem('token', token)
       }
       return {
         user: updatedUser,

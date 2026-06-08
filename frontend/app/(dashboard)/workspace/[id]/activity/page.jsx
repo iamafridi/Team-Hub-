@@ -126,6 +126,7 @@ export default function ActivityPage() {
   const filteredLogs = filterUser === 'all' ? logs : (userStats[filterUser]?.logs || [])
 
   useEffect(() => {
+    if (!workspaceId) return
     fetchActivity()
   }, [workspaceId])
 
