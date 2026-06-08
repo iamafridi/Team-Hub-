@@ -9,6 +9,7 @@ import { Button } from '@/components/ui'
 
 const ROLES = [
   { value: 'ADMIN', label: 'Admin', description: 'Full control of workspace' },
+  { value: 'PROJECT_MANAGER', label: 'Project Manager', description: 'Can manage projects, goals, and deadlines' },
   { value: 'MODERATOR', label: 'Moderator', description: 'Can manage goals and announcements' },
   { value: 'MEMBER', label: 'Member', description: 'Can create and update own items' },
 ]
@@ -256,6 +257,9 @@ export default function InviteMemberModal({ workspaceId, onClose, onSuccess }) {
             <div className="space-y-2 text-xs text-text-muted">
               <div>
                 <span className="font-medium text-accent">Admin:</span> Invite & manage members, change roles & status
+              </div>
+              <div>
+                <span className="font-medium text-accent">Project Manager:</span> Manage projects, goals, deadlines, and actions
               </div>
               <div>
                 <span className="font-medium text-accent">Moderator:</span> Create & manage goals, announcements, actions

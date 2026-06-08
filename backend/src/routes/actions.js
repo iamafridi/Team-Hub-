@@ -68,6 +68,17 @@ router.post('/:workspaceId/actions', requirePermission('CREATE_ACTION'), async (
   try {
     const { title, description, priority, assigneeId, goalId, dueDate, recurrenceRule } = createActionSchema.parse(req.body)
 
+    if (dueDate && new Date(dueDate) < new Date(new Date().toDateString())) {
+      return res.status(400).json({ error: 'Please select a valid deadline.' })
+    }
+
+    const existing = await prisma.actionItem.findFirst({
+      where: { title, workspaceId: req.params.workspaceId, deletedAt: null },
+    })
+    if (existing) {
+      return res.status(409).json({ error: 'This task already exists in the project.' })
+    }
+
     const assigner = await prisma.user.findUnique({ where: { id: req.userId } })
     const workspace = await prisma.workspace.findUnique({ where: { id: req.params.workspaceId } })
 
@@ -134,6 +145,23 @@ router.patch('/:workspaceId/actions/:actionId', requireRole('ADMIN', 'MODERATOR'
       where: { id: req.params.actionId },
       include: { assignee: true },
     })
+
+    if (title && title !== existingAction.title) {
+      const dup = await prisma.actionItem.findFirst({
+        where: { title, workspaceId: req.params.workspaceId, deletedAt: null, id: { not: req.params.actionId } },
+      })
+      if (dup) {
+        return res.status(409).json({ error: 'This task already exists in the project.' })
+      }
+    }
+
+    if (existingAction.status === 'DONE' && assigneeId !== undefined && assigneeId !== existingAction.assigneeId) {
+      return res.status(400).json({ error: 'Completed tasks cannot be reassigned.' })
+    }
+
+    if (dueDate && new Date(dueDate) < new Date(new Date().toDateString())) {
+      return res.status(400).json({ error: 'Please select a valid deadline.' })
+    }
 
     const action = await prisma.actionItem.update({
       where: { id: req.params.actionId },

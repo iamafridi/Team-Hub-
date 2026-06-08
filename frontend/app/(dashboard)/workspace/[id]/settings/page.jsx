@@ -20,7 +20,7 @@ export default function SettingsPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [userForm, setUserForm] = useState({ name: '', email: '' })
-  const [workspaceForm, setWorkspaceForm] = useState({ name: '', description: '', visibility: 'private', slackWebhookUrl: '' })
+  const [workspaceForm, setWorkspaceForm] = useState({ name: '', description: '', status: 'ACTIVE', deadline: '', visibility: 'private', slackWebhookUrl: '' })
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
     goalUpdates: true,
@@ -50,6 +50,8 @@ export default function SettingsPage() {
       setWorkspaceForm({
         name: activeWorkspace.name || '',
         description: activeWorkspace.description || '',
+        status: activeWorkspace.status || 'ACTIVE',
+        deadline: activeWorkspace.deadline ? activeWorkspace.deadline.split('T')[0] : '',
         visibility: 'private',
         slackWebhookUrl: activeWorkspace.slackWebhookUrl || '',
       })
@@ -95,6 +97,8 @@ export default function SettingsPage() {
       await api.patch(`/workspaces/${workspaceId}`, {
         name: workspaceForm.name,
         description: workspaceForm.description,
+        status: workspaceForm.status,
+        deadline: workspaceForm.deadline || null,
       })
       updateWorkspace(workspaceId, workspaceForm)
       toast.success('Workspace settings updated')
@@ -317,6 +321,29 @@ export default function SettingsPage() {
               placeholder="Describe your workspace..."
               className="w-full p-2 rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent resize-none text-sm"
               rows="3"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs text-text-muted mb-1 block font-semibold">Project Status</label>
+            <select
+              value={workspaceForm.status}
+              onChange={(e) => setWorkspaceForm({ ...workspaceForm, status: e.target.value })}
+              className="w-full p-2 rounded-lg border border-border bg-surface text-text-primary focus:outline-none focus:border-accent text-sm"
+            >
+              <option value="ACTIVE">Active</option>
+              <option value="ON_HOLD">On Hold</option>
+              <option value="COMPLETED">Completed</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-xs text-text-muted mb-1 block font-semibold">Deadline</label>
+            <input
+              type="date"
+              value={workspaceForm.deadline}
+              onChange={(e) => setWorkspaceForm({ ...workspaceForm, deadline: e.target.value })}
+              className="w-full p-2 rounded-lg border border-border bg-surface text-text-primary focus:outline-none focus:border-accent text-sm"
             />
           </div>
 

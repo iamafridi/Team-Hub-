@@ -6,13 +6,15 @@ import { useWorkspaceStore } from '@/store/workspaceStore'
 import { useNotificationStore } from '@/store/notificationStore'
 import api from '@/lib/api'
 import { motion } from 'framer-motion'
-import { Zap, Target, Users, Bell } from 'lucide-react'
+import { Zap, Target, Users, Bell, ChevronRight, Clock, ListChecks } from 'lucide-react'
+import { Badge } from '@/components/ui'
 import {
   DashboardGoalsModal,
   DashboardMembersModal,
   DashboardNotificationsModal,
   DashboardWorkspacesModal,
 } from '@/components/dashboard/DashboardModals'
+import Link from 'next/link'
 
 export default function Dashboard() {
   const { user } = useAuthStore()
@@ -135,6 +137,97 @@ export default function Dashboard() {
           )
         })}
       </motion.div>
+
+      {/* Workspace Cards */}
+      {workspaces.length > 0 && (
+        <motion.div variants={itemVariants}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-text-primary">All Workspaces</h2>
+            <Link
+              href={workspaces[0]?.id ? `/workspace/${workspaces[0].id}/settings` : '#'}
+              className="text-sm text-accent hover:underline flex items-center gap-1"
+            >
+              Manage <ChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {workspaces.map((ws) => {
+              const daysLeft = ws.deadline
+                ? Math.ceil((new Date(ws.deadline) - new Date()) / (1000 * 60 * 60 * 24))
+                : null
+              const statusColor = {
+                ACTIVE: 'bg-green-500',
+                COMPLETED: 'bg-indigo-500',
+                ON_HOLD: 'bg-amber-500',
+              }[ws.status] || 'bg-gray-500'
+              const taskTotal = ws.taskCounts
+                ? Object.values(ws.taskCounts).reduce((a, b) => a + b, 0)
+                : 0
+              return (
+                <Link key={ws.id} href={`/workspace/${ws.id}`}>
+                  <motion.div
+                    whileHover={{ y: -3 }}
+                    className="bg-surface border border-border rounded-xl p-5 hover:shadow-md transition-all h-full"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: ws.accentColor || '#6366F1' }}
+                        />
+                        <h3 className="font-semibold text-text-primary truncate">{ws.name}</h3>
+                      </div>
+                      <Badge
+                        variant={ws.status === 'COMPLETED' ? 'completed' : 'default'}
+                        size="sm"
+                      >
+                        {ws.status === 'ACTIVE' ? (
+                          <span className="flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                            Active
+                          </span>
+                        ) : ws.status === 'ON_HOLD' ? (
+                          <span className="flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+                            On Hold
+                          </span>
+                        ) : (
+                          'Completed'
+                        )}
+                      </Badge>
+                    </div>
+
+                    {ws.description && (
+                      <p className="text-sm text-text-muted line-clamp-2 mb-3">{ws.description}</p>
+                    )}
+
+                    <div className="flex items-center gap-4 text-xs text-text-muted mt-auto pt-2 border-t border-border">
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5" />
+                        {ws._count?.members || 0} members
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <ListChecks className="w-3.5 h-3.5" />
+                        {taskTotal} tasks
+                      </span>
+                      {daysLeft !== null && (
+                        <span className={`flex items-center gap-1 ml-auto ${daysLeft <= 0 ? 'text-red-400' : daysLeft <= 3 ? 'text-amber-400' : ''}`}>
+                          <Clock className="w-3.5 h-3.5" />
+                          {daysLeft <= 0
+                            ? 'Overdue'
+                            : daysLeft === 1
+                              ? '1 day left'
+                              : `${daysLeft}d left`}
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+                </Link>
+              )
+            })}
+          </div>
+        </motion.div>
+      )}
 
       {/* Recent Activity */}
       <motion.div variants={itemVariants}>

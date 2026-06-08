@@ -212,19 +212,30 @@ export function DashboardClient({ children }) {
                   <button onClick={() => setShowCreateWorkspaceModal(true)} className="text-accent text-lg leading-none hover:opacity-70">+</button>
                 </p>
                 <div className="space-y-1">
-                  {workspaces.map((ws) => (
-                    <button
-                      key={ws.id}
-                      onClick={() => setActiveWorkspace(ws)}
-                      className={`w-full text-left px-3 py-2 text-sm transition-all duration-150 flex items-center gap-2 ${activeWorkspace?.id === ws.id
-                          ? 'text-text-primary font-medium border-l-2 border-accent -ml-px pl-[10px]'
-                          : 'text-text-muted hover:text-text-primary'
-                        }`}
-                    >
-                      <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0"></span>
-                      <span className="truncate">{ws.name}</span>
-                    </button>
-                  ))}
+                  {workspaces.map((ws) => {
+                    const isActive = ws.status === 'ACTIVE'
+                    return (
+                      <button
+                        key={ws.id}
+                        onClick={() => setActiveWorkspace(ws)}
+                        className={`w-full text-left px-3 py-2 text-sm transition-all duration-150 flex items-center gap-2 ${activeWorkspace?.id === ws.id
+                            ? 'text-text-primary font-medium border-l-2 border-accent -ml-px pl-[10px]'
+                            : 'text-text-muted hover:text-text-primary'
+                          }`}
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: ws.accentColor || '#6366F1' }}
+                        />
+                        <span className="truncate flex-1">{ws.name}</span>
+                        {!isActive && (
+                          <span className="text-[10px] uppercase tracking-wider text-text-muted font-medium">
+                            {ws.status === 'ON_HOLD' ? 'HOLD' : 'DONE'}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             </nav>

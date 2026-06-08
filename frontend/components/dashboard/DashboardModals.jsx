@@ -5,7 +5,7 @@ import api from '@/lib/api'
 import { useNotificationStore } from '@/store/notificationStore'
 import { useWorkspaceStore } from '@/store/workspaceStore'
 import { Modal, Button, Badge, Avatar, Input, ProgressBar } from '@/components/ui'
-import { ChevronLeft, Trash2, Clock, Plus, Minus } from 'lucide-react'
+import { ChevronLeft, Trash2, Clock, Plus, Minus, Users, ListChecks } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 // ============================================================================
@@ -474,15 +474,16 @@ export function DashboardMembersModal({ workspaceId, isOpen, onClose, currentUse
                 <div className="space-y-3">
                   <div>
                     <label className="text-xs text-text-muted mb-1 block">Role</label>
-                    <select
-                      value={selectedRole}
-                      onChange={(e) => setSelectedRole(e.target.value)}
-                      className="w-full p-2 rounded-lg border border-border bg-surface text-text-primary focus:outline-none focus:border-accent text-sm"
-                    >
-                      <option value="ADMIN">Admin</option>
-                      <option value="MODERATOR">Moderator</option>
-                      <option value="MEMBER">Member</option>
-                    </select>
+                      <select
+                        value={selectedRole}
+                        onChange={(e) => setSelectedRole(e.target.value)}
+                        className="w-full p-2 rounded-lg border border-border bg-surface text-text-primary focus:outline-none focus:border-accent text-sm"
+                      >
+                        <option value="ADMIN">Admin</option>
+                        <option value="PROJECT_MANAGER">Project Manager</option>
+                        <option value="MODERATOR">Moderator</option>
+                        <option value="MEMBER">Member</option>
+                      </select>
                   </div>
 
                   <div className="flex gap-2">
@@ -659,7 +660,7 @@ export function DashboardWorkspacesModal({ isOpen, onClose, currentUser }) {
   const [view, setView] = useState('list')
   const [selected, setSelected] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [editForm, setEditForm] = useState({ name: '', description: '' })
+  const [editForm, setEditForm] = useState({ name: '', description: '', status: 'ACTIVE', deadline: '' })
   const [updating, setUpdating] = useState(false)
   const { workspaces } = useWorkspaceStore()
 
@@ -669,6 +670,8 @@ export function DashboardWorkspacesModal({ isOpen, onClose, currentUser }) {
       setEditForm({
         name: selected.name || '',
         description: selected.description || '',
+        status: selected.status || 'ACTIVE',
+        deadline: selected.deadline ? selected.deadline.split('T')[0] : '',
       })
     }
   }, [selected, view, currentUser])
@@ -689,6 +692,8 @@ export function DashboardWorkspacesModal({ isOpen, onClose, currentUser }) {
       await api.patch(`/workspaces/${selected.id}`, {
         name: editForm.name,
         description: editForm.description,
+        status: editForm.status,
+        ...(editForm.deadline ? { deadline: new Date(editForm.deadline).toISOString() } : {}),
       })
       toast.success('Workspace updated')
       setView('list')
@@ -707,19 +712,55 @@ export function DashboardWorkspacesModal({ isOpen, onClose, currentUser }) {
             {workspaces.length === 0 ? (
               <div className="text-center py-8 text-text-muted">No workspaces</div>
             ) : (
-              workspaces.map((ws) => (
-                <div key={ws.id} className="flex items-center justify-between p-4 bg-surface-2 rounded-xl hover:bg-surface transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-text-primary truncate">{ws.name}</div>
-                    {ws.description && (
-                      <p className="text-sm text-text-muted truncate mt-1">{ws.description}</p>
-                    )}
+              workspaces.map((ws) => {
+                const daysLeft = ws.deadline
+                  ? Math.ceil((new Date(ws.deadline) - new Date()) / (1000 * 60 * 60 * 24))
+                  : null
+                const taskTotal = ws.taskCounts
+                  ? Object.values(ws.taskCounts).reduce((a, b) => a + b, 0)
+                  : 0
+                return (
+                  <div key={ws.id} className="flex items-center justify-between p-4 bg-surface-2 rounded-xl hover:bg-surface transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: ws.accentColor || '#6366F1' }}
+                        />
+                        <div className="font-medium text-text-primary truncate">{ws.name}</div>
+                        <Badge
+                          variant={ws.status === 'COMPLETED' ? 'completed' : 'default'}
+                          size="sm"
+                        >
+                          {ws.status === 'ACTIVE' ? 'Active' : ws.status === 'ON_HOLD' ? 'On Hold' : 'Completed'}
+                        </Badge>
+                      </div>
+                      {ws.description && (
+                        <p className="text-sm text-text-muted truncate mt-1">{ws.description}</p>
+                      )}
+                      <div className="flex items-center gap-3 mt-2 text-xs text-text-muted">
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          {ws._count?.members || 0}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <ListChecks className="w-3 h-3" />
+                          {taskTotal}
+                        </span>
+                        {daysLeft !== null && (
+                          <span className={`flex items-center gap-1 ${daysLeft <= 0 ? 'text-red-400' : ''}`}>
+                            <Clock className="w-3 h-3" />
+                            {daysLeft <= 0 ? 'Overdue' : `${daysLeft}d left`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => handleViewWorkspace(ws)}>
+                      View
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => handleViewWorkspace(ws)}>
-                    View
-                  </Button>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         ) : (
@@ -733,9 +774,29 @@ export function DashboardWorkspacesModal({ isOpen, onClose, currentUser }) {
             </button>
 
             <div>
-              <h3 className="text-lg font-bold text-text-primary">{selected?.name}</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-lg font-bold text-text-primary">{selected?.name}</h3>
+                <Badge
+                  variant={selected?.status === 'COMPLETED' ? 'completed' : 'default'}
+                  size="sm"
+                >
+                  {selected?.status === 'ACTIVE' ? 'Active' : selected?.status === 'ON_HOLD' ? 'On Hold' : 'Completed'}
+                </Badge>
+              </div>
               {selected?.description && (
                 <p className="text-text-secondary mt-1">{selected.description}</p>
+              )}
+              {selected?.deadline && (
+                <div className="flex items-center gap-1 text-sm text-text-muted mt-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  Due {new Date(selected.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {(() => {
+                    const days = Math.ceil((new Date(selected.deadline) - new Date()) / (1000 * 60 * 60 * 24))
+                    if (days <= 0) return <span className="text-red-400 ml-1">(Overdue)</span>
+                    if (days <= 3) return <span className="text-amber-400 ml-1">({days}d left)</span>
+                    return <span className="ml-1">({days}d left)</span>
+                  })()}
+                </div>
               )}
               {selected?.createdAt && (
                 <p className="text-xs text-text-muted mt-2">
@@ -762,6 +823,24 @@ export function DashboardWorkspacesModal({ isOpen, onClose, currentUser }) {
                       className="w-full p-2 rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent resize-none text-sm"
                       rows="3"
                     />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-text-muted mb-1 block">Status</label>
+                    <select
+                      value={editForm.status}
+                      onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                      className="w-full p-2 rounded-lg border border-border bg-surface text-text-primary focus:outline-none focus:border-accent text-sm"
+                    >
+                      <option value="ACTIVE">Active</option>
+                      <option value="ON_HOLD">On Hold</option>
+                      <option value="COMPLETED">Completed</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-text-muted mb-1 block">Deadline</label>
+                    <Input type="date" value={editForm.deadline} onChange={(e) => setEditForm({ ...editForm, deadline: e.target.value })} />
                   </div>
 
                   <Button variant="primary" onClick={handleUpdateWorkspace} disabled={updating} className="w-full">

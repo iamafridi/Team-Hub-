@@ -30,12 +30,14 @@ model User {
 }
 
 model Workspace {
-  id              String   @id @default(cuid())
+  id              String        @id @default(cuid())
   name            String
   description     String?
-  accentColor     String   @default("#6366F1")
+  status          ProjectStatus @default(ACTIVE)
+  deadline        DateTime?
+  accentColor     String        @default("#6366F1")
   slackWebhookUrl String?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime      @default(now())
   members         WorkspaceMember[]
   goals           Goal[]
   announcements   Announcement[]
@@ -216,7 +218,14 @@ model AuditLog {
 enum Role {
   ADMIN
   MODERATOR
+  PROJECT_MANAGER
   MEMBER
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ON_HOLD
 }
 
 enum GoalStatus {

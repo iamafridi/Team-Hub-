@@ -35,32 +35,56 @@ router.get('/debug/info', async (req, res) => {
 const createWorkspaceSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
+  status: z.enum(['ACTIVE', 'COMPLETED', 'ON_HOLD']).optional(),
+  deadline: z.string().optional(),
   accentColor: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
 })
 
 const updateWorkspaceSchema = z.object({
   name: z.string().min(1).optional(),
   description: z.string().optional(),
+  status: z.enum(['ACTIVE', 'COMPLETED', 'ON_HOLD']).optional(),
+  deadline: z.string().optional().nullable(),
   accentColor: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
-  slackWebhookUrl: z.string().url().optional(),
+  slackWebhookUrl: z.string().url().optional().nullable(),
 })
 
 const inviteSchema = z.object({
   email: z.string().email(),
-  role: z.enum(['ADMIN', 'MODERATOR', 'MEMBER']).optional(),
+  role: z.enum(['ADMIN', 'MODERATOR', 'PROJECT_MANAGER', 'MEMBER']).optional(),
 })
 
 router.get('/', async (req, res) => {
   try {
+    const { status } = req.query
+    const where = { members: { some: { userId: req.userId } } }
+    if (status) where.status = status
+
     const workspaces = await prisma.workspace.findMany({
-      where: {
-        members: { some: { userId: req.userId } },
-      },
+      where,
       include: {
-        _count: { select: { members: true } },
+        _count: {
+          select: {
+            members: true,
+            actionItems: { where: { deletedAt: null } },
+          },
+        },
       },
+      orderBy: { createdAt: 'desc' },
     })
-    res.json({ data: workspaces, message: 'Workspaces fetched' })
+
+    const data = await Promise.all(workspaces.map(async (ws) => {
+      const taskCounts = await prisma.actionItem.groupBy({
+        by: ['status'],
+        where: { workspaceId: ws.id, deletedAt: null },
+        _count: true,
+      })
+      const statusCounts = { TODO: 0, IN_PROGRESS: 0, IN_REVIEW: 0, DONE: 0 }
+      taskCounts.forEach(t => { statusCounts[t.status] = t._count })
+      return { ...ws, taskCounts: statusCounts }
+    }))
+
+    res.json({ data, message: 'Workspaces fetched' })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Server error' })
@@ -71,8 +95,7 @@ router.post('/', async (req, res) => {
   try {
     console.log('[Workspace Create] req.userId:', req.userId)
     console.log('[Workspace Create] body:', JSON.stringify(req.body))
-    const { name, description, accentColor } = createWorkspaceSchema.parse(req.body)
-    console.log('[Workspace Create] parsed:', { name, description, accentColor })
+    const { name, description, status, deadline, accentColor } = createWorkspaceSchema.parse(req.body)
 
     if (!req.userId) {
       console.error('[Workspace Create] Missing userId in request')
@@ -83,6 +106,8 @@ router.post('/', async (req, res) => {
       data: {
         name,
         description,
+        status: status || 'ACTIVE',
+        deadline: deadline ? new Date(deadline) : null,
         accentColor: accentColor || '#6366F1',
         members: {
           create: { userId: req.userId, role: 'ADMIN' },
@@ -111,7 +136,7 @@ router.get('/:id', async (req, res) => {
         members: {
           include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
         },
-        _count: { select: { goals: true, actionItems: true } },
+        _count: { select: { goals: true, actionItems: { where: { deletedAt: null } } } },
       },
     })
     if (!workspace) {
@@ -122,8 +147,18 @@ router.get('/:id', async (req, res) => {
       return res.status(403).json({ error: 'Forbidden' })
     }
     req.memberRole = membership.role
-    const { slackWebhookUrl, ...safeWorkspace } = workspace
-    res.json({ data: membership.role === 'ADMIN' ? workspace : safeWorkspace, message: 'Workspace fetched' })
+
+    const taskCounts = await prisma.actionItem.groupBy({
+      by: ['status'],
+      where: { workspaceId: workspace.id, deletedAt: null },
+      _count: true,
+    })
+    const taskStatusCounts = { TODO: 0, IN_PROGRESS: 0, IN_REVIEW: 0, DONE: 0 }
+    taskCounts.forEach(t => { taskStatusCounts[t.status] = t._count })
+
+    const enriched = { ...workspace, taskCounts: taskStatusCounts }
+    const { slackWebhookUrl, ...safeWorkspace } = enriched
+    res.json({ data: membership.role === 'ADMIN' ? enriched : safeWorkspace, message: 'Workspace fetched' })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Server error' })
@@ -132,14 +167,16 @@ router.get('/:id', async (req, res) => {
 
 router.patch('/:id', requirePermission('UPDATE_WORKSPACE'), async (req, res) => {
   try {
-    const { name, description, accentColor, slackWebhookUrl } = updateWorkspaceSchema.parse(req.body)
+    const { name, description, status, deadline, accentColor, slackWebhookUrl } = updateWorkspaceSchema.parse(req.body)
     const workspace = await prisma.workspace.update({
       where: { id: req.params.id },
       data: {
         ...(name && { name }),
         ...(description !== undefined && { description }),
+        ...(status && { status }),
+        ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null }),
         ...(accentColor && { accentColor }),
-        ...(slackWebhookUrl !== undefined && { slackWebhookUrl }),
+        ...(slackWebhookUrl !== undefined && { slackWebhookUrl: slackWebhookUrl || null }),
       },
     })
     logAction(req.userId, workspace.id, 'UPDATE', 'Workspace', workspace.id)
@@ -203,7 +240,7 @@ router.get('/:id/members', async (req, res) => {
 
 router.patch('/:id/members/:userId', requirePermission('CHANGE_MEMBER_ROLE'), async (req, res) => {
   try {
-    const { role } = z.object({ role: z.enum(['ADMIN', 'MODERATOR', 'MEMBER']) }).parse(req.body)
+    const { role } = z.object({ role: z.enum(['ADMIN', 'MODERATOR', 'PROJECT_MANAGER', 'MEMBER']) }).parse(req.body)
     const member = await prisma.workspaceMember.update({
       where: {
         userId_workspaceId: { userId: req.params.userId, workspaceId: req.params.id },

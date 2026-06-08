@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Shield, Power, Trash2, Check, ChevronRight, UserCheck } from 'lucide-react'
 
-const ROLES = ['ADMIN', 'MODERATOR', 'MEMBER']
+const ROLES = ['ADMIN', 'PROJECT_MANAGER', 'MODERATOR', 'MEMBER']
 
 export default function MemberActions({
   member,

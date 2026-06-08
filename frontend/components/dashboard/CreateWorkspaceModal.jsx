@@ -22,6 +22,8 @@ export function CreateWorkspaceModal({ isOpen, onClose }) {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    status: 'ACTIVE',
+    deadline: '',
     accentColor: '#D34F1F',
   })
   const [loading, setLoading] = useState(false)
@@ -38,6 +40,8 @@ export function CreateWorkspaceModal({ isOpen, onClose }) {
       const response = await api.post('/workspaces', {
         name: formData.name,
         description: formData.description,
+        status: formData.status,
+        deadline: formData.deadline || undefined,
         accentColor: formData.accentColor,
       })
 
@@ -46,7 +50,7 @@ export function CreateWorkspaceModal({ isOpen, onClose }) {
       setActiveWorkspace(newWorkspace)
 
       toast.success('Workspace created!')
-      setFormData({ name: '', description: '', accentColor: '#D34F1F' })
+      setFormData({ name: '', description: '', status: 'ACTIVE', deadline: '', accentColor: '#D34F1F' })
       onClose()
     } catch (error) {
       console.error('Create error:', error)
@@ -100,7 +104,37 @@ export function CreateWorkspaceModal({ isOpen, onClose }) {
             <p className="text-xs text-text-muted mt-3">Up to 500 characters. Visible to every member.</p>
           </div>
 
-          {/* 03 ACCENT */}
+          {/* 03 STATUS */}
+          <div>
+            <label className="text-xs font-semibold text-accent uppercase tracking-wider mb-3 block">
+              03 STATUS
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              className="w-full px-0 py-2 border-b-2 border-border bg-transparent text-text-primary outline-none transition-colors hover:border-text-secondary focus:border-accent text-sm"
+            >
+              <option value="ACTIVE">Active</option>
+              <option value="ON_HOLD">On Hold</option>
+              <option value="COMPLETED">Completed</option>
+            </select>
+          </div>
+
+          {/* 04 DEADLINE */}
+          <div>
+            <label className="text-xs font-semibold text-accent uppercase tracking-wider mb-3 block">
+              04 DEADLINE
+            </label>
+            <input
+              type="date"
+              value={formData.deadline}
+              onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+              className="w-full px-0 py-2 border-b-2 border-border bg-transparent text-text-primary outline-none transition-colors hover:border-text-secondary focus:border-accent text-sm"
+            />
+            <p className="text-xs text-text-muted mt-3">Optional project deadline date.</p>
+          </div>
+
+          {/* 05 ACCENT */}
           <div>
             <label className="text-xs font-semibold text-accent uppercase tracking-wider mb-3 block">
               03 ACCENT · {formData.accentColor.toUpperCase()}
@@ -133,7 +167,7 @@ export function CreateWorkspaceModal({ isOpen, onClose }) {
             </div>
           </div>
 
-          {/* 04 PREVIEW */}
+          {/* 06 PREVIEW */}
           <div>
             <label className="text-xs font-semibold text-accent uppercase tracking-wider mb-3 block">
               04 PREVIEW
