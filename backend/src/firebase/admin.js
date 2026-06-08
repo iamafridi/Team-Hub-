@@ -3,7 +3,7 @@ const path = require('path')
 
 let initialized = false
 
-if (process.env.FIREBASE_SERVICE_ACCOUNT || process.env.CI) {
+function tryInit() {
   try {
     let serviceAccount
 
@@ -24,6 +24,18 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT || process.env.CI) {
     initialized = true
   } catch (err) {
     console.warn('Firebase Admin init failed, falling back to dev auth:', err.message)
+  }
+}
+
+if (process.env.FIREBASE_SERVICE_ACCOUNT || process.env.CI) {
+  tryInit()
+} else {
+  const fs = require('fs')
+  const keyPath = path.resolve(__dirname, '../../service-account.json')
+  if (fs.existsSync(keyPath)) {
+    tryInit()
+  } else {
+    console.warn('No service-account.json found, Firebase Admin not initialized')
   }
 }
 

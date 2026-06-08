@@ -164,7 +164,7 @@ export function DashboardClient({ children }) {
                     const Icon = link.icon
                     const active = isNavActive(link.href)
                     const firstId = workspaces[0]?.id
-                    const href = link.href === 'dashboard' ? '/dashboard' : firstId ? `/workspace/${firstId}/${link.href}` : '#'
+                    const href = link.href === 'dashboard' ? '/dashboard' : firstId ? `/workspace/${firstId}/${link.href}` : '/dashboard'
                     return (
                       <motion.div key={link.href} whileHover={{ x: 2 }} transition={{ duration: 0.1 }}>
                         <Link
