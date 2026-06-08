@@ -248,7 +248,7 @@ export default function GoalsPage() {
             <select
               value={formData.recurrenceRule || ''}
               onChange={(e) => setFormData({ ...formData, recurrenceRule: e.target.value || null })}
-              className="w-full px-3 py-2 border border-border rounded-lg bg-white text-text-primary outline-none focus:border-accent transition-colors"
+              className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-primary outline-none focus:border-accent transition-colors"
             >
               <option value="">No recurrence</option>
               <option value="DAILY">Daily</option>
@@ -261,7 +261,7 @@ export default function GoalsPage() {
             <select
               value={formData.assigneeId || ''}
               onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value || null })}
-              className="w-full px-3 py-2 border border-border rounded-lg bg-white text-text-primary outline-none focus:border-accent transition-colors"
+              className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-primary outline-none focus:border-accent transition-colors"
             >
               <option value="">No one</option>
               {members?.map((member) => (

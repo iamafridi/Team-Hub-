@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import { useWorkspaceStore } from '@/store/workspaceStore'
@@ -15,6 +15,7 @@ import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { GlobalSearch } from '@/components/search/GlobalSearch'
 import { CreateWorkspaceModal } from '@/components/dashboard/CreateWorkspaceModal'
 import Link from 'next/link'
+import toast from 'react-hot-toast'
 
 export function DashboardClient({ children }) {
   const router = useRouter()
@@ -26,6 +27,8 @@ export function DashboardClient({ children }) {
   const [mounted, setMounted] = useState(false)
   const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [noWorkspace, setNoWorkspace] = useState(false)
+  const toastShown = useRef(false)
 
   const navLinks = [
     { icon: Home, label: 'Dashboard', href: 'dashboard' },
@@ -90,6 +93,13 @@ export function DashboardClient({ children }) {
       setWorkspaces(res.data.data)
       if (res.data.data.length > 0) {
         setActiveWorkspace(res.data.data[0])
+        setNoWorkspace(false)
+      } else {
+        setNoWorkspace(true)
+        if (!toastShown.current) {
+          toastShown.current = true
+          toast.error('Create a workspace to get started')
+        }
       }
     } catch (error) {
       console.error('Failed to fetch workspaces:', error)
@@ -163,20 +173,29 @@ export function DashboardClient({ children }) {
                   {navLinks.map((link, idx) => {
                     const Icon = link.icon
                     const active = isNavActive(link.href)
+                    const hasWorkspace = workspaces.length > 0
                     const firstId = workspaces[0]?.id
-                    const href = link.href === 'dashboard' ? '/dashboard' : firstId ? `/workspace/${firstId}/${link.href}` : '/dashboard'
+                    const href = link.href === 'dashboard' ? '/dashboard' : hasWorkspace ? `/workspace/${firstId}/${link.href}` : '/dashboard'
+                    const disabled = link.href !== 'dashboard' && !hasWorkspace
                     return (
-                      <motion.div key={link.href} whileHover={{ x: 2 }} transition={{ duration: 0.1 }}>
+                      <motion.div key={link.href} whileHover={disabled ? {} : { x: 2 }} transition={{ duration: 0.1 }}>
                         <Link
                           href={href}
-                          onClick={() => {
+                          onClick={(e) => {
+                            if (disabled) {
+                              e.preventDefault()
+                              toast.error('Create a workspace first')
+                              return
+                            }
                             if (isMobile && sidebarOpen) {
                               toggleSidebar()
                             }
                           }}
                           className={`flex items-center gap-3 px-3 py-2 text-sm transition-all duration-150 ${active
                               ? 'text-text-primary font-medium border-l-2 border-accent -ml-px pl-[10px]'
-                              : 'text-text-muted hover:text-text-primary'
+                              : disabled
+                                ? 'text-text-muted/50 cursor-not-allowed'
+                                : 'text-text-muted hover:text-text-primary'
                             }`}
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
@@ -195,12 +214,14 @@ export function DashboardClient({ children }) {
               <div>
                 <p className="text-xs font-semibold text-accent uppercase tracking-wider mb-3 px-2 flex items-center justify-between">
                   <span>§ INSIDE · 02</span>
-                  <span className="text-text-muted">ADMIN</span>
+                  <span className="text-text-muted">{noWorkspace ? '—' : (activeWorkspace?._count?.members || '—') + ' MEMBERS'}</span>
                 </p>
                 <div className="px-2 py-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-accent flex-shrink-0"></div>
-                    <p className="text-sm font-medium text-text-primary">{activeWorkspace?.name || 'Workspace'}</p>
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${noWorkspace ? 'bg-text-muted' : 'bg-accent'}`}></div>
+                    <p className={`text-sm font-medium ${noWorkspace ? 'text-text-muted' : 'text-text-primary'}`}>
+                      {noWorkspace ? 'No workspace' : (activeWorkspace?.name || 'Workspace')}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -256,7 +277,7 @@ export function DashboardClient({ children }) {
                       onClick={() => setTheme(value === 'system' ? 'light' : value)}
                       className={`flex-1 px-2 py-1 text-xs uppercase font-semibold rounded transition-colors ${
                         theme === (value === 'system' ? 'light' : value)
-                          ? 'bg-text-primary text-white'
+                          ? 'bg-accent text-white'
                           : 'bg-surface-2 text-text-primary hover:bg-border'
                       }`}
                     >

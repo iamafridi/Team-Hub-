@@ -30,7 +30,7 @@ const PERMISSIONS = {
 
   // Data & Audit
   EXPORT_DATA: ['ADMIN'],
-  VIEW_AUDIT_LOG: ['ADMIN'],
+  VIEW_AUDIT_LOG: ['ADMIN', 'PROJECT_MANAGER', 'MODERATOR'],
 }
 
 function can(role, permission) {

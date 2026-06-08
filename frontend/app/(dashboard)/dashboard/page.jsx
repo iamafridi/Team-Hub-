@@ -15,12 +15,14 @@ import {
   DashboardWorkspacesModal,
 } from '@/components/dashboard/DashboardModals'
 import Link from 'next/link'
+import { CreateWorkspaceModal } from '@/components/dashboard/CreateWorkspaceModal'
 
 export default function Dashboard() {
   const { user } = useAuthStore()
   const { workspaces, activeWorkspace } = useWorkspaceStore()
   const { notifications } = useNotificationStore()
   const [openModal, setOpenModal] = useState(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const [stats, setStats] = useState([
     { label: 'Total Workspaces', value: '—', icon: Zap },
     { label: 'Active Goals', value: '—', icon: Target },
@@ -138,8 +140,8 @@ export default function Dashboard() {
         })}
       </motion.div>
 
-      {/* Workspace Cards */}
-      {workspaces.length > 0 && (
+      {/* Workspace Cards or Create CTA */}
+      {workspaces.length > 0 ? (
         <motion.div variants={itemVariants}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-text-primary">All Workspaces</h2>
@@ -155,11 +157,6 @@ export default function Dashboard() {
               const daysLeft = ws.deadline
                 ? Math.ceil((new Date(ws.deadline) - new Date()) / (1000 * 60 * 60 * 24))
                 : null
-              const statusColor = {
-                ACTIVE: 'bg-green-500',
-                COMPLETED: 'bg-indigo-500',
-                ON_HOLD: 'bg-amber-500',
-              }[ws.status] || 'bg-gray-500'
               const taskTotal = ws.taskCounts
                 ? Object.values(ws.taskCounts).reduce((a, b) => a + b, 0)
                 : 0
@@ -227,6 +224,27 @@ export default function Dashboard() {
             })}
           </div>
         </motion.div>
+      ) : (
+        <motion.div variants={itemVariants}>
+          <div className="bg-surface border border-border rounded-xl p-12 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
+              <Zap className="w-8 h-8 text-accent" />
+            </div>
+            <h2 className="text-2xl font-serif text-text-primary mb-3">
+              You haven&apos;t created any <span className="italic">workspaces</span> yet
+            </h2>
+            <p className="text-text-secondary max-w-md mx-auto mb-8">
+              Workspaces are where your team collaborates on goals, tracks actions, and stays aligned.
+              Create your first workspace to get started.
+            </p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-6 py-3 bg-accent text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
+            >
+              Create Workspace
+            </button>
+          </div>
+        </motion.div>
       )}
 
       {/* Recent Activity */}
@@ -237,7 +255,9 @@ export default function Dashboard() {
             <div>
               <div className="text-text-muted text-lg mb-2">No activity yet</div>
               <p className="text-text-secondary text-sm">
-                Start by creating a goal or inviting team members
+                {workspaces.length === 0
+                  ? 'Create a workspace to start collaborating with your team'
+                  : 'Start by creating a goal or inviting team members'}
               </p>
             </div>
           </div>
@@ -274,6 +294,11 @@ export default function Dashboard() {
           currentUser={user}
         />
       )}
+
+      <CreateWorkspaceModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+      />
     </motion.div>
   )
 }

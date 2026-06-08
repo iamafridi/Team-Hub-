@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Download, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui'
+import { Download, Loader2, Shield, User } from 'lucide-react'
+import { Button, Badge } from '@/components/ui'
+import { useAuthStore } from '@/store/authStore'
 import api from '@/lib/api'
 
 function formatAction(action, entityType) {
@@ -14,18 +15,24 @@ function formatAction(action, entityType) {
 
 export default function AuditPage() {
   const { id: workspaceId } = useParams()
+  const { user } = useAuthStore()
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [actor, setActor] = useState('')
   const [action, setAction] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [userRole, setUserRole] = useState(null)
+  const canViewAll = userRole && ['ADMIN', 'MODERATOR', 'PROJECT_MANAGER'].includes(userRole)
 
   useEffect(() => {
     if (!workspaceId) return
     setLoading(true)
     api.get(`/workspaces/${workspaceId}/audit`)
-      .then((res) => setLogs(res.data.data || []))
+      .then((res) => {
+        setLogs(res.data.data || [])
+        setUserRole(res.data.role)
+      })
       .catch((err) => console.error('Failed to fetch audit logs:', err))
       .finally(() => setLoading(false))
   }, [workspaceId])
@@ -86,13 +93,22 @@ export default function AuditPage() {
 
       {/* Action Bar */}
       <motion.div
-        className="flex items-center justify-between gap-4"
+        className="flex items-center justify-between gap-4 flex-wrap"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        <div className="text-sm text-text-muted font-medium">
-          {filteredLogs.length} ENTRIES
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-text-muted font-medium">
+            {filteredLogs.length} ENTRIES
+          </div>
+          <Badge variant="default" size="sm" className="flex items-center gap-1">
+            {canViewAll ? (
+              <><Shield className="w-3 h-3" /> All workspace logs</>
+            ) : (
+              <><User className="w-3 h-3" /> Your logs</>
+            )}
+          </Badge>
         </div>
         <Button
           onClick={downloadCSV}
@@ -107,7 +123,7 @@ export default function AuditPage() {
 
       {/* Filters */}
       <motion.div
-        className="bg-white border border-border rounded-xl p-6 space-y-4"
+        className="bg-surface border border-border rounded-xl p-6 space-y-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
@@ -115,19 +131,21 @@ export default function AuditPage() {
         <div className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">
           § FILTERS · 01
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-text-muted uppercase tracking-wide mb-2">
-              Actor
-            </label>
-            <input
-              type="text"
-              value={actor}
-              onChange={(e) => setActor(e.target.value)}
-              placeholder="Name or email..."
-              className="w-full px-3 py-2 border-b border-border bg-transparent text-text-primary placeholder-text-muted outline-none transition-colors hover:border-text-secondary focus:border-accent"
-            />
-          </div>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${canViewAll ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4`}>
+          {canViewAll && (
+            <div>
+              <label className="block text-xs font-medium text-text-muted uppercase tracking-wide mb-2">
+                Actor
+              </label>
+              <input
+                type="text"
+                value={actor}
+                onChange={(e) => setActor(e.target.value)}
+                placeholder="Name or email..."
+                className="w-full px-3 py-2 border-b border-border bg-transparent text-text-primary placeholder-text-muted outline-none transition-colors hover:border-text-secondary focus:border-accent"
+              />
+            </div>
+          )}
           <div>
             <label className="block text-xs font-medium text-text-muted uppercase tracking-wide mb-2">
               Action
@@ -167,7 +185,7 @@ export default function AuditPage() {
 
       {/* Entries */}
       <motion.div
-        className="bg-white border border-border rounded-xl p-6"
+        className="bg-surface border border-border rounded-xl p-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}

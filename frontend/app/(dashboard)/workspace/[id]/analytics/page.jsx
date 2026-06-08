@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BarChart3, TrendingUp, Users, Target, X } from 'lucide-react'
+import { BarChart3, TrendingUp, Users, Target, X, Lightbulb } from 'lucide-react'
 import { Button } from '@/components/ui'
 import api from '@/lib/api'
 
@@ -66,9 +67,34 @@ export default function AnalyticsPage() {
         <p className="text-sm sm:text-lg text-text-secondary">Track your workspace performance and progress</p>
       </motion.div>
 
-      {!analytics ? (
-        <motion.div variants={itemVariants} className="text-center py-16 text-text-muted">
-          No analytics data available yet.
+      {!analytics || (analytics.totalGoals === 0 && analytics.actionsCompletedThisWeek === 0 && analytics.overdueActions === 0 && analytics.overdueGoals === 0) ? (
+        <motion.div variants={itemVariants} className="bg-surface border border-border rounded-xl p-12 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
+            <Lightbulb className="w-8 h-8 text-accent" />
+          </div>
+          <h2 className="text-2xl font-serif text-text-primary mb-3">
+            No <span className="italic">analytics</span> yet
+          </h2>
+          <p className="text-text-secondary max-w-md mx-auto mb-2">
+            Analytics will populate as your team creates goals, completes actions, and tracks progress.
+          </p>
+          <p className="text-text-muted text-sm max-w-md mx-auto mb-8">
+            Here&apos;s what you&apos;ll see: goals completed, actions completed this week, overdue items, member activity, and goal status breakdowns.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Link
+              href={`/workspace/${workspaceId}/goals`}
+              className="px-6 py-3 bg-accent text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
+            >
+              Create a Goal
+            </Link>
+            <Link
+              href={`/workspace/${workspaceId}/actions`}
+              className="px-6 py-3 bg-surface-2 text-text-primary rounded-lg font-semibold hover:bg-border transition-colors"
+            >
+              Create an Action
+            </Link>
+          </div>
         </motion.div>
       ) : (
         <>
@@ -83,7 +109,7 @@ export default function AnalyticsPage() {
                   onClick={() => setSelectedStat(stat.key)}
                   className="cursor-pointer"
                 >
-                  <div className="bg-white border border-border rounded-xl p-6 hover:shadow-md transition-all">
+                  <div className="bg-surface border border-border rounded-xl p-6 hover:shadow-md transition-all">
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-sm font-medium text-text-muted uppercase tracking-wider">{stat.label}</span>
                       <div className="p-2 rounded-lg bg-surface"><Icon className="w-5 h-5 text-accent" /></div>
