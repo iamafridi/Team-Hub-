@@ -3,7 +3,7 @@ const prisma = require('../prisma/client')
 
 async function authMiddleware(req, res, next) {
   try {
-    if (['true', '1', 'yes'].includes(process.env.AUTH_DISABLED?.toLowerCase().replace(/"/g, ''))) {
+    if (process.env.AUTH_DISABLED && process.env.AUTH_DISABLED !== 'false') {
       const bypassEmail = process.env.AUTH_BYPASS_EMAIL || 'admin@test.com'
       let user = await prisma.user.findUnique({ where: { email: bypassEmail } })
       if (!user) {
